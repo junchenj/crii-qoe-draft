@@ -1,0 +1,636 @@
+% rxn.sty
+%
+% The following macros
+%
+%   \atomlabel{}{}
+%   \bond{}
+%   \bondabove{}{}{}{}{}
+%   \bondbelow{}{}{}{}{}
+%   \bracketgroup{}
+%   \circa
+%   \group{}
+%   \isotope{}{}
+%   \moiety{}{}{}
+%
+% were stolen from a old posting to comp.text.tex:
+%
+%   Date:     Sun, 28 Aug 88 16:13 CDT
+%   From: <JEPTEX%TAMVENUS.BITNET@Forsythe.Stanford.EDU> (J E PITTMAN)
+%   Subject:  Chemical Formulae macros (repeat)
+%
+% John W. Eaton
+% jwe@che.utexas.edu
+% Department of Chemical Engineering
+% The University of Texas at Austin
+
+% The \if@rxn conditional will be used to determine whether or
+% not we are inside the rxn environment.
+
+\newif\if@rxn
+\@rxnfalse
+
+% The \if@defeqnsw conditional will be used to decide whether
+% reactions should be numbered by default (true in the rxn
+% environment, false in the rxn* envrionment).
+
+\newif\if@defeqnsw
+\@defeqnswtrue
+
+% Counts.  \@rxnfields and \@rxnfieldcount are used to count how many
+% total fields there are in the preamble and how many are actually
+% used so that the reaction numbering scheme can correctly insert the
+% required number of extra ampersands.
+
+\newcount\@rxnfields
+\newcount\@rxnfieldcount
+\newcount\@tmpc
+
+% right/leftharpoons that are the same width as \longrightarrow and
+% \longleftarrow.
+
+\def\longleftharpoondown{\protect\@llhd}
+  \def\@llhd{\hbox{$\leftharpoondown\joinrel\relbar$}}
+\def\longrightharpoondown{\protect\@lrhd}
+  \def\@lrhd{\hbox{$\relbar\joinrel\rightharpoondown$}}
+\def\longleftharpoonup{\protect\@llhu}
+  \def\@llhu{\hbox{$\leftharpoonup\joinrel\relbar$}}
+\def\longrightharpoonup{\protect\@lrhu}
+  \def\@lrhu{\hbox{$\relbar\joinrel\rightharpoonup$}}
+
+% Make \longrightleftharpoons a relation just like \rigthleftharpoons.
+
+\def\longrightleftharpoons{\mathrel{\mathpalette\lrlh@{}}}
+\def\lrlh@#1{\vcenter{\hbox{\ooalign{%
+  \raise1pt\hbox{$#1\longrightharpoonup$}\crcr
+  \raise-1pt\hbox{$#1\longleftharpoondown$}}}}}
+
+% Make \rlh, \rarrow, and \larrow in terms of \@arrow.  \rlh, \rarrow,
+% and \larrow are intended to work properly inside the formula command
+% and the rxn environment.
+
+\def\rlh{\gdef\@tmparrow{\lrlh@}
+  \@ifnextchar[{\@arrow}{\@arrow[]}}
+\def\rarrow{\gdef\@tmparrow{\longrightarrow}
+  \@ifnextchar[{\@arrow}{\@arrow[]}}
+\def\larrow{\gdef\@tmparrow{\longleftarrow}
+  \@ifnextchar[{\@arrow}{\@arrow[]}}
+
+\def\@arrow[#1]{\@ifnextchar[{\@@arrow[#1]}{\@@arrow[#1][]}}
+
+% A way to type normal math inside a \formula{}.
+
+\def\rxnmath#1{\text{$#1$}}
+
+% Let \@@arrow take care of adding the alignment characters based on
+% whether or not we are inside the rxn environment.  Note that we make
+% \@tmparrow look like a large operator and force it to be in
+% \displaystyle so that subscripts and superscripts will be placed
+% above and below it.
+
+\def\@amp{&}
+\def\@@arrow[#1][#2]{\relax
+  \if@rxn
+    \@amp\mathrel{%
+      \displaystyle\mathop{\@tmparrow{}}^{\rxnmath{#1}}_{\rxnmath{#2}}}\@amp
+  \else
+    \mathrel{%
+      \displaystyle\mathop{\@tmparrow{}}^{\rxnmath{#1}}_{\rxnmath{#2}}}
+  \fi}
+
+\def\@xarrow[#1]{\@ifnextchar[{\@@xarrow[#1]}{\@@xarrow[#1][]}}
+
+\def\equalsfill{$\m@th\mathord=\mkern-7mu
+  \cleaders\hbox{$\!\mathord=\mkern-7mu$}\hfill
+  \mkern-7mu\mathord=$}
+
+\def\barfill{$\m@th\mathord-\mkern-7mu
+  \cleaders\hbox{$\!\mathord-\mkern-7mu$}\hfill
+  \mkern-7mu\mathord-$}
+
+\def\lrlhfill{%
+      $\mkern-6mu$
+      \ooalign{%
+        \raise0.9pt\hbox{$\relbar$}\crcr
+        \raise-1pt\hbox{$\leftharpoondown$}}%
+      $\mkern-20mu$
+      \equalsfill
+      $\mkern-20mu$
+      \ooalign{%
+        \raise0.9pt\hbox{$\mkern-4mu\rightharpoonup$}\crcr
+        \raise-1pt\hbox{$\relbar$}}}
+
+\def\rightarrowfill{\barfill$\mkern-4mu\rightarrow$}
+\def\leftarrowfill{$\leftarrow$\mkern-4mu\barfill}
+
+\def\xrlh{\gdef\@tmparrow{\lrlhfill}
+  \@ifnextchar[{\@xarrow}{\@xarrow[]}}
+\def\xrarrow{\gdef\@tmparrow{\rightarrowfill}
+  \@ifnextchar[{\@xarrow}{\@xarrow[]}}
+\def\xlarrow{\gdef\@tmparrow{\leftarrowfill}
+  \@ifnextchar[{\@xarrow}{\@xarrow[]}}
+
+\def\@@txarrow#1#2#3{%
+  \mathrel{\displaystyle
+    \mathop{\hbox to #3{\@tmparrow{}}}^{\rxnmath{#1}}_{\rxnmath{#2}}}}
+
+\newlength{\@@tarrowlen}
+
+\def\@@xarrow[#1][#2]{%
+  \settowidth{\@@tarrowlen}{$\@@txarrow{#1}{#2}{0pt}$}%
+  \addtolength{\@@tarrowlen}{0.7em}%
+  \if@rxn
+    \@amp\@@txarrow{#1}{#2}{\@@tarrowlen}\@amp
+  \else
+    \@@txarrow{#1}{#2}{\@@tarrowlen}
+  \fi}
+
+% Easy forms for special things.  \data is normally used after
+% reactions but before things like heats of reaction, etc:
+%
+%    H_2(g) + {1/2} O_2(g) \rarrow H_2O(g) \data \dH\dg = -242 kJ
+%
+% Note that \e, \E, \dg, and \dH are also available inside \formula
+% and the rxn environment as abbreviations for \electron, \potential,
+% \degree, and \deltah (they are not global because they would
+% probably conflict with something else).
+
+\def\deltaH{\rxnmath{\Delta H}}
+\def\data{&\qquad&}
+\def\potential{{\cal E}}
+\def\electron{{\it e}^-}
+\def\degree{\relax\ifmmode^\circ\else$^\circ$\fi}
+
+% An easy way to make some abbreviations available in the formula and
+% rxn environment.
+
+\def\dorxnabbrevs{%
+  \let\e\electron
+  \let\E\potential
+  \let\dg\degree
+  \let\dH\deltaH}
+
+% A formula environment.  Typing \formula{H_2O} in running text or in
+% math mode produces the formula H_2O in a roman font.
+
+\def\formula#1{\relax\dorxnabbrevs\ifmmode{\rm#1}\else$\rm#1$\fi}
+
+% A displayed formula environment.
+
+\def\displayformula{\dorxnabbrevs $$\halign to \displaywidth \bgroup}
+\def\enddisplayformula{\egroup $$\global\@ignoretrue}
+
+% An easier way to type \formula{}.  This lets you type |H_2O| in
+% running text or in math mode to produce the formula H_2O in a roman
+% font.  Allow users to switch the meaning of | from \formula to \vert
+% and back again.  DON'T turn | into formula by default because we
+% can't be sure that there won't be macro definitions after this that
+% depend on | not being active.
+
+{\catcode`\|=\active
+  \gdef\makebarformula{\catcode`\|=\active
+    \def|##1|{\formula{##1}}}}
+
+\def\makebarvert{\catcode`\|=12\mathcode`\|="026A}
+
+% Add | to the list of things that are (or might be) special.
+
+\let\@@@dospecials\dospecials
+\def\dospecials{\@@@dospecials\do\|}
+
+% Fix up the array and tabular environments so that we can get at the
+% vertical rule stuff with |.  Don't need to worry about the verbatim
+% stuff because we added | to \dospecials.
+
+\let\@@@array\array
+\def\array{\makebarvert\@@@array}
+\let\@@@endarray\endarray
+\def\endarray{\@@@endarray\makebarformula}
+
+\let\@@@tabular\tabular
+\def\tabular{\makebarvert\@@@tabular}
+\let\@@@endtabular\endtabular
+\def\endtabular{\@@@endtabular\makebarformula}
+
+% The \@rxnfcnt and \@tworxncolumns macros simplify the creation of
+% the rxn environment.  \@rxnfcnt lets us count columns in the rxn
+% environment as they are used up so that we can get the equation
+% numbering to work properly.
+
+\def\@rxnfcnt{\global\advance\@rxnfieldcount\@ne}
+
+\def\@tworxncolumns{%
+  &$\hfil\rm\displaystyle{{}##{}}\hfil$\tabskip\z@
+    \noexpand\@rxnfcnt
+  &$\hfil\rm\displaystyle{##}$\tabskip\z@
+    \noexpand\@rxnfcnt}
+
+% Need a way to get at + and = without the surrounding ampersands
+% inside the reaction environment (\slash is already defined to
+% produce a /).
+
+\def\plus{+}
+\def\equals{=}
+
+% Magic.  The reaction environment redefines /, +, and = so that you
+% can type
+%
+%     2Ag + Pd^{2\plus} \rarrow 2Ag^\plus   + Pd \\
+%      Ga + 3Ag^\plus   \rarrow Ga^{3\plus} + 3Ag \\
+%     H_2 + {1/2} O_2   \rarrow H_2O
+%
+% Instead of
+%
+%     2Ag & + & Pd^{2\plus}     & \rarrow & 2Ag^\plus   & + & 7 Pd \\
+%      Ga & + & 3Ag^\plus       & \rarrow & Ga^{3\plus} & + & 3Ag \\
+%     H_2 & + & \frac{1}{2} O_2 & \rarrow & H_2O
+%
+% and still have everything line up neatly.
+%
+% Without the $\relax$, then \begin{rxn}{} will (in some but not all
+% cases!) generate the following error
+%
+%   ! Missing number, treated as zero.
+%   <to be read again> 
+%                   &
+%   l.NN \begin{rxn}{}
+%
+% I have no idea why going in and out of math mode before doing
+% \catcode`\=\active \def={...}, avoids this problem, but it
+% apparently does, so that's why it's in the definition below...
+
+{\catcode`\/=\active \catcode`\+=\active \catcode`\==\active
+  \gdef\rxn#1{%
+    \def\@fmtstring{#1}%
+    \catcode`\/\active \def/{\over}%
+    \catcode`\+\active \def+{&\plus&}%
+    \ifmmode\else$\relax$\fi
+    \catcode`\=\active \def={&\equals&}%
+    \@rxntrue
+    \dorxnabbrevs
+    % A way to type normal math inside dislpayed reactions.
+    \def\rxnmath##1{%
+      {\def={\equals}\def+{\plus}\def/{\slash}\text{$\displaystyle ##1$}}}
+    \stepcounter{equation}%
+    \let\@currentlabel\theequation
+    \if@defeqnsw \global\@eqnswtrue \else \global\@eqnswfalse \fi
+    \ifx\@fmtstring\@empty
+      \let\@rxn\@@rxn
+    \else
+      \let\@rxn\@fmtrxn
+    \fi
+    \intertext@  % requires amsmath.sty
+    \@@par\nobreak
+    \@rxn{#1}}}
+
+\let\@@@rxn\rxn
+\def\rxn{\makebarvert\@@@rxn}
+
+% The normal reaction environment.  The columns are rcrcrcrc... until
+% the last.  There are 25 columns for chemical formulas, etc.  If
+% that's not enough, add more `\span\@tworxncolumns' entries and
+% change the number that intializes \@rxnfields (increment it by two
+% for every `\span\@tworxncolumns' that you add).
+
+\def\@@rxn#1{%
+  \tabskip\@centering
+  \global\@rxnfieldcount\z@
+  \global\@rxnfields=25     % Magic!
+  \let\\=\@rxncr
+  \ifvmode
+    \nointerlineskip
+  \fi
+  $$\halign to \displaywidth \bgroup
+    $\hfil\rm\displaystyle{##}$\tabskip\z@ \@rxnfcnt
+    \span\@tworxncolumns \span\@tworxncolumns \span\@tworxncolumns
+    \span\@tworxncolumns \span\@tworxncolumns \span\@tworxncolumns
+    \span\@tworxncolumns \span\@tworxncolumns \span\@tworxncolumns
+    \span\@tworxncolumns \span\@tworxncolumns \span\@tworxncolumns
+    \tabskip\@centering&\llap{##}\tabskip\z@\cr}
+
+% The formatted reaction environment.  \@fmtrxn is a lot like the LaTeX
+% \array envrironment, but with some special macros in place of the
+% standard ones used by \array.
+
+\def\@fmtrxn#1{%
+  \global\@rxnfields\@ne \global\@rxnfieldcount\z@
+  \let\@classz\@rxnclassz \let\@classiv\@arrayclassiv
+  \let\\=\@rxncr\@@fmtrxn{#1}}
+
+% Provide our own definitions of \@addamp and \@classz for the LaTeX
+% \array macros.
+
+\def\@rxnaddamp{\relax\if@firstamp\@firstampfalse\else%
+  \global\advance\@rxnfields\@ne%
+  \edef\@preamble{\@preamble &\noexpand\@rxnfcnt}\fi}
+\def\@rxnampacol{\@rxnaddamp \@rxnacol}
+\def\@rxnacolampacol{\@rxnacol\@rxnaddamp\@rxnacol}
+\def\@rxnacol{\edef\@preamble{\@preamble \hskip \arraycolsep}}
+
+% Don't add \arraycolsep between columns.  Make operators and
+% relations in centered columns work properly.
+
+\def\@rxnclassz{\relax%
+  \ifcase\@lastchclass\@rxnacolampacol\or\@rxnampacol\or%
+  \or\or\@rxnaddamp\or%
+  \@rxnacolampacol\or\@firstampfalse\@rxnacol\fi%
+  \edef\@preamble{\@preamble%
+  \ifcase\@chnum%
+    $\hfil\rm\displaystyle{{}\@sharp{}}\hfil$%
+  \or%
+    $\rm\displaystyle{\@sharp}\hfil$%
+  \or%
+    $\hfil\rm\displaystyle{\@sharp}$\fi}}
+
+% The \@@fmtrxn macro is a lot like the LaTeX \@array macro, but with
+% some special things thrown in.  It centers the array by default, and
+% provides a last column that is used for numbering the rows of the
+% array (the reactions).
+
+\def\@rxntestpach#1{\@chclass \ifnum \@lastchclass=\tw@ 4 \else
+    \ifnum \@lastchclass=3 5 \else
+     \z@ \if #1c\@chnum \z@ \else
+                              \if #1l\@chnum \@ne \else
+                              \if #1r\@chnum \tw@ \else
+          \@chclass \if #1|\@ne \else
+                    \if #1@\tw@ \else
+                    \if #1p3 \else \z@ \@preamerr 0\fi
+  \fi  \fi  \fi  \fi  \fi  \fi
+\fi}
+
+\def\@rxnxexnoop #1\@@{}
+
+\def\@rxnexpast#1{\@rxnxexpast #1*0x\@@}
+
+\def\@rxnxexpast#1*#2#3#4\@@{%
+  \edef\reserved@a{#1}%
+  \@tempcnta#2\relax
+  \ifnum\@tempcnta>\z@
+    \@whilenum\@tempcnta>\z@\do
+       {\edef\reserved@a{\reserved@a#3}\advance\@tempcnta \m@ne}%
+    \let\reserved@b\@rxnxexpast
+  \else
+    \let\reserved@b\@rxnxexnoop
+  \fi
+  \expandafter\reserved@b\reserved@a #4\@@}
+
+\def\@rxnmkpream#1{\@firstamptrue\@lastchclass6
+  \let\@preamble\@empty
+  \let\protect\@unexpandable@protect
+  \let\@sharp\relax
+  \let\@startpbox\relax\let\@endpbox\relax
+  \@rxnexpast{#1}%
+  \expandafter\@tfor \expandafter
+    \@nextchar \expandafter:\expandafter=\reserved@a\do
+       {\@rxntestpach\@nextchar
+    \ifcase \@chclass \@classz \or \@classi \or \@classii \or \@classiii
+      \or \@classiv \or\@classv \fi\@lastchclass\@chclass}%
+  \ifcase \@lastchclass \@rxnacol
+      \or \or \@preamerr \@ne\or \@preamerr \tw@\or \or \@rxnacol \fi}
+
+\def\@@fmtrxn#1{%
+  \setbox\@arstrutbox\hbox{\vrule height\arraystretch \ht\strutbox%
+    depth\arraystretch \dp\strutbox width\z@}%
+    \@rxnmkpream{#1}%
+    \edef\@preamble{%
+      \tabskip\@centering
+      $$\halign to \displaywidth
+      \bgroup \tabskip\z@ \@arstrut \@preamble}%
+    \let\@startpbox\@@startpbox \let\@endpbox\@@endpbox
+    \let\par\relax \let\@sharp## \let\protect\relax
+    \lineskip\z@ \baselineskip\z@
+    \@preamble\tabskip\@centering&\llap{##}\tabskip\z@\cr}
+
+% These are adapted directly from LaTeX.
+
+\def\@rxncr{{\ifnum0=`}\fi\@ifstar{\global\@eqpen\@M%
+    \@yrxncr}{\global\@eqpen\interdisplaylinepenalty\@yrxncr}}
+
+\def\@yrxncr{\@ifnextchar[{\@xrxncr}{\@xrxncr[\z@]}}
+
+\def\@xrxncr[#1]{\ifnum0=`{\fi}\@@rxncr%
+   \noalign{\penalty\@eqpen\vskip #1\relax}}
+
+% Figure out how many ampersands need to be added to fill up the
+% template defined in the preamble, then (optionally) add the equation
+% number as the last column.  This is based on the \@@rxncr macro from
+% equations.sty.  Use a token list register rather than repeated
+% \edef's (the TeXbook, Appendix D, page 373).  It's supposed to be
+% faster and more space efficient than the \aftergroup method given
+% on page 374.
+
+\newtoks\fix@mps
+\def\@@rxncr{%
+  \@tmpc\@rxnfieldcount%
+  \ifnum\@rxnfieldcount>\z@%
+    \fix@mps={}%
+    \loop%
+      \fix@mps=\expandafter{\the\fix@mps &}%
+      \advance\@tmpc by 1\relax%
+      \ifnum\@tmpc < \@rxnfields%
+    \repeat%
+    \the\fix@mps%
+    \if@eqnsw\@eqnnum\stepcounter{equation}\fi%
+  \fi%
+  \if@defeqnsw\global\@eqnswtrue\else\global\@eqnswfalse\fi%
+  \global\@rxnfieldcount\z@\cr}
+
+% Force a reaction to be numbered.  This is the same as the \yesnumber
+% macro from equations.sty.
+
+\def\yesnumber{\global\@eqnswtrue}
+
+% The end of the rxn environment
+
+\def\endrxn{\ifnum\@rxnfieldcount>\z@\@@rxncr\fi\egroup%
+  \global\advance\c@equation\m@ne$$\global\@ignoretrue\@rxnfalse}
+
+% The rxn* environment.
+
+\@namedef{rxn*}{\@defeqnswfalse\@eqnswfalse\rxn}
+\@namedef{endrxn*}{\endrxn}
+
+% The macros stolen from J. E. PITTMAN
+% <jeptex%tamvenus.bitnet@forsythe.stanford.edu>:
+
+\def\moiety#1#2#3{\relax
+  \begingroup
+    #1\nobreak\setbox0=\hbox{X#1}\setbox1=\hbox{$\bigl($}%
+    \ifdim\ht0>\ht1 \hskip -0.3ex \fi
+    \vtop \bgroup
+      \vbox \bgroup
+        \setbox1=\hbox{$\scriptscriptstyle\vphantom{(}#2$}%
+        \copy1 \vskip -2\dp1 \vskip \ht0
+      \egroup
+      \nointerlineskip
+      \vbox \bgroup
+        \setbox1=\hbox{$\scriptscriptstyle\vphantom{(}#3$}%
+        \vskip \dp0 \vskip -2\dp1 \box1
+      \egroup
+    \egroup
+  \-%
+  \endgroup}
+
+\def\isotope#1#2{\relax
+  \leavevmode
+  \begingroup
+    \setbox0=\vbox \bgroup
+      \hbox{$\scriptscriptstyle\vphantom{(}#1$}%
+      \hbox{$\scriptscriptstyle\vphantom{(}#2$}%
+    \egroup
+    \setbox1=\hbox{X}%
+    \vtop \bgroup
+      \vbox \bgroup
+        \setbox2=\hbox to \wd0 \bgroup
+        \hfil $\scriptscriptstyle\vphantom{(} #1$
+      \egroup
+      \copy2 \vskip -2\dp2 \vskip \ht1 \egroup \nointerlineskip
+      \vbox \bgroup
+        \setbox2=\hbox to \wd0 \bgroup
+        \hfil $\scriptscriptstyle\vphantom{(} #2$
+      \egroup
+        \vskip \dp1\vskip -2\dp2\box2
+      \egroup
+    \egroup
+  \endgroup
+\nobreak}
+
+\def\group#1{\relax
+  \begingroup
+    \setbox0=\hbox{\formula{#1}}%
+    $\left( \vrule width -0.4ex height 1.05\ht0 depth 1.05\dp0 \right.$
+    #1\nobreak
+    $\left. \vrule width -0.4ex height 1.05\ht0 depth 1.05\dp0 \right)$
+    \-%
+  \endgroup}
+
+\def\bracketgroup#1{\relax
+  \begingroup
+    \setbox0=\hbox{\formula{#1}}%
+    $\left[ \vrule width -0.4ex height 1.05\ht0 depth 1.05\dp0 \right.$
+    #1\nobreak
+    $\left. \vrule width -0.4ex height 1.05\ht0 depth 1.05\dp0 \right]$
+    \-%
+  \endgroup}
+
+\def\atomlabel#1#2{\relax
+  \leavevmode
+  \begingroup
+    \setbox0=\vbox{\hbox{#1}\hbox{#2}}%
+    \vbox \bgroup
+      \hbox to \wd0{\hfil$\scriptscriptstyle\vphantom{(}#1$\hfil}%
+      \nointerlineskip
+      \hbox to \wd0{\hfil\vphantom{(}\formula{#2}\hfil}%
+    \egroup
+  \endgroup}
+
+\def\circa{$\sim$}
+
+\def\bondbelow#1#2#3#4#5{\relax
+  \vtop \bgroup
+    \setbox0=\hbox{\formula{#2}}%
+    \copy0
+    \nointerlineskip
+    \kern 0.1em
+    \hbox to \wd0 \bgroup
+      \hfil
+      \ifcase#1
+      \or
+        \vrule height 1em depth 0pt width 0.05em
+      \or
+        \vrule height 1em depth 0pt width 0.05em
+        \hskip 0.1em
+        \vrule height 1em depth 0pt width 0.05em
+      \or
+        \vrule height 1em depth 0pt width 0.05em
+        \hskip 0.1em
+        \vrule height 1em depth 0pt width 0.05em
+        \hskip 0.1em
+        \vrule height 1em depth 0pt width 0.05em
+      \fi
+      \hfil
+      \egroup
+    \nointerlineskip
+    \hbox to \wd0 \bgroup
+      \hss
+      \hbox to 0pt \bgroup
+        \hss
+        \formula{#3}%
+      \egroup
+      \hbox{\formula{#4}}%
+      \hbox to 0pt \bgroup
+        \formula{#5}%
+        \hss
+      \egroup
+      \hss
+    \egroup
+  \egroup}
+
+\def\bondabove#1#2#3#4#5{\relax
+  \vbox \bgroup
+    \setbox0=\hbox{\formula{#2}}%
+    \hbox to \wd0 \bgroup
+      \hss
+      \hbox to 0pt \bgroup
+        \hss
+        \formula{#3}%
+      \egroup
+      \hbox{\formula{#4}}%
+      \hbox to 0pt \bgroup
+        \formula{#5}%
+        \hss
+      \egroup
+      \hss
+    \egroup
+    \nointerlineskip
+    \hbox to \wd0 \bgroup
+      \hfil
+      \ifcase#1
+      \or
+        \vrule height 1em depth 0pt width 0.05em
+      \or
+        \vrule height 1em depth 0pt width 0.05em
+        \hskip 0.1em
+        \vrule height 1em depth 0pt width 0.05em
+      \or
+        \vrule height 1em depth 0pt width 0.05em
+        \hskip 0.1em
+        \vrule height 1em depth 0pt width 0.05em
+        \hskip 0.1em
+        \vrule height 1em depth 0pt width 0.05em
+      \fi
+      \hfil
+    \egroup
+    \nointerlineskip
+    \kern 0.1em
+    \copy0
+  \egroup}
+
+\def\bond#1{\relax
+  \hbox \bgroup
+    \kern 0.1em
+    \setbox0=\hbox{X}%
+    \vbox to \ht0 \bgroup
+      \vss
+      \ifcase#1
+      \or
+        \hrule width 1em depth 0pt height 0.05em
+      \or
+        \hrule width 1em depth 0pt height 0.05em
+        \vskip 0.1em
+        \hrule width 1em depth 0pt height 0.05em
+      \or
+        \hrule width 1em depth 0pt height 0.05em
+        \vskip 0.1em
+        \hrule width 1em depth 0pt height 0.05em
+        \vskip 0.1em
+        \hrule width 1em depth 0pt height 0.05em
+      \fi
+      \vss
+    \egroup
+    \kern 0.1em
+  \egroup}
+
+% Finally, define some molecules:
+
+\def\ethylene{\formula{CH_2\bond{2}CH_2}}
+\def\ethane{\formula{CH_3\bond{1}CH_3}}
