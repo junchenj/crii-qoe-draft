@@ -1,14 +1,14 @@
 \vskip -.75em
 \mypara{Summary}
-User-perceived quality of experience (QoE) is a driving force behind the Internet ecosystem, yet many users still suffer from suboptimal QoE. 
-Unlike previous work (\eg reducing web service delay, pushing caches closer to end users, etc), this proposal introduces a new dimension to QoE optimization: {\bf awareness of QoE sensitivity}, \ie how sensitive a user's QoE is to the delay of the web service.
-For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is more likely to be affected by 5ms delay of the web service than another request that has already spent 500ms on the network. 
-Such difference of QoE sensitivity is largely not ignored in today's web services, but it has profound implications, especially when the requests compete for limited shared resources.
+User-perceived quality of experience (QoE) is a key driving force behind the Internet ecosystem, yet many users still suffer from suboptimal QoE. 
+Unlike previous approaches (\eg cutting tail backend delay, pushing caches closer to end users), this proposal introduces a new dimension to QoE optimization: {\bf awareness of QoE sensitivity}, \ie how sensitive a user's QoE is to the delay of the web service.
+For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is more likely to be affected by 10ms delay of the web service than a request that has already spent 500ms on the network. 
+Such difference of QoE sensitivity is largely ignored in today's web services, but it has profound implications, especially when the requests compete for limited shared resources.
 Our early results show that by making existing web service aware of QoE sensitivity, we could significantly improve web service QoE and save resources compared to designs that are agnostic to QoE sensitivity.
-In this proposal, we plan to thoroughly investigate this idea with three steps.
-(1) We quantify its potential benefits on QoE and resource savings 
-(2) We propose novel algorithms for QoE-aware scheduling and resource allocation in web services. 
-(3) We present novel system designs and implementation that makes web services  aware of QoE sensitivity in practice.
+In this proposal, we plan to thoroughly investigate the idea of making web services aware of QoE-sensitivity in three steps.
+(1) We quantify its potential benefits in QoE and resource savings.
+(2) We propose novel algorithms for QoE-aware scheduling and resource allocation of web services. 
+(3) We present novel system designs and implement prototypes that make web services QoE-aware in practice.
 
 
 % Thus, the goal of each subsystems in a large web service, such as web server or key-value store, should be to optimize the overall QoE of many users given limited resources. 
