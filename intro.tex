@@ -5,10 +5,10 @@ Unlike previous approaches (\eg cutting tail backend delay, pushing caches close
 For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is more likely to be affected by 10ms delay of the web service than a request that has already spent 500ms on the network. 
 Such difference of QoE sensitivity is largely ignored in today's web services, but it has profound implications, especially when the requests compete for limited shared resources.
 Our early results show that by making existing web service aware of QoE sensitivity, we could significantly improve web service QoE and save resources compared to designs that are agnostic to QoE sensitivity.
-In this proposal, we plan to thoroughly investigate the idea of making web services aware of QoE-sensitivity in three steps.
-(1) We quantify its potential benefits in QoE and resource savings.
-(2) We propose novel algorithms for QoE-aware scheduling and resource allocation of web services. 
-(3) We present novel system designs and implement prototypes that make web services QoE-aware in practice.
+In this proposal, we show various benefits of making web services aware of QoE sensitivity (\eg improving request scheduling and resource allocation) and provide a technical roadmap to address common challenges  (\eg estimating QoE sensitivity).
+% (1) We quantify its potential benefits in QoE and resource savings.
+% (2) We propose novel algorithms for QoE-aware scheduling and resource allocation of web services. 
+% (3) We present novel system designs and implement prototypes that make web services QoE-aware in practice.
 
 
 % Thus, the goal of each subsystems in a large web service, such as web server or key-value store, should be to optimize the overall QoE of many users given limited resources. 
@@ -21,76 +21,137 @@ In this proposal, we plan to thoroughly investigate the idea of making web servi
 
 \section{Overview}
 
-User-perceived quality of experience (QoE) is one of the driving forces behind the Internet ecosystem, which consists of {\em subsystems}, \eg datacenters, CDNs, cellular carriers, backbone networks, content providers, who share resources across users. 
-% End-to-end Quality of Experience (QoE) is the driving force behind today's Internet application ecosystem, which includes several subsystem
-% The Internet application ecosystem consists of many subsystems, Cloud, ISP, CDNs, etc, and 
-Thus, one fundamental question is {\em how to share resources across users in a way that optimizes their overall QoE?}
-The primary constraint is that these subsystems are {\em federated}: it is impractical to orchestrate a global optimization where they relinquish the control on how their resources are shared. 
-Instead, the conventional wisdom has been that each subsystem shares its resources among users in a way that optimizes the overall performance metrics within its limit and imposes no differentiation between users if they are ``functionally'' identical (\ie same service, business relationship, etc).
+% - QoE is important and our goal is to improve QoE for Web Services.
+Model web services depend critically on maintaining high {\em Quality of Experience} ({\em QoE}). 
+Thus, one fundamental problem of web service backend is how to share resources across users while optimizing their overall QoE. 
+%Their business models, based on advertisement or subscription, are driven by user engagement, for which QoE is believed to play a vital role (among other factors such as content, user interfaces).
 
-In contrast, we are driven by a simple observation derived directly from the federated nature of the Internet ecosystem.
-In a subsystem, there is {\em a substantial heterogeneity} among its users with respect to how sensitive their QoE is to the performance of the subsystem, even if these users are functionally identical. 
-Thus, the right question to ask is {\em not} how a subsystem should optimize the overall performance among users; instead, it should minimize {\em overall impact on user-perceived QoE}, which requires treating users differently, rather than equally, depending on how much impact it has on the user's perceived QoE.
+\mypara{Today's limitation}
+One of the determining factors of QoE is the page load time. 
+While QoE can be defined in several ways, it generally consists of the latency of three sources: web server backend, wide-area networks (WANs), and client-side software.
+%- Web services, like applications running in the cloud, have been basing their optimizations on the goal of improving server-side latency (sometimes the fraction of users meeting some fixed deadline)
+Because of the federated nature of Internet architecture, today web service providers cannot control the end-to-end pipeline of each web services---to them, WANs and clients devices are largely blackboxes operated, not by the web services, but by ISPs, cellular carriers, and device vendors.
+%(while web browsers and apps are developed by the web service providers, the client-side performance is largely decided by how OS share resources among multiple applications).
+Thus, instead of optimizing  QoE directly, web services focus on optimizing {\em the backend delay}.
+For instance, they strive to minimize the means/tails of backend delay for each web request, or the fraction of requests whose response times exceed a predetermined deadline (\eg 300ms).
+%- This project takes a step back and asks a different question: does the latency have the same impact on user QoE? 
+In doing so, all requests are optimized with {\em same} objective function of backend response time; that is a backend delay of $n$~ms has the same effect across different requests.
 
-In this proposal, we apply this idea to improving QoE of web services.
+In this proposal, we take a step back and ask: {\em does the backend response time really have the same impact on users' QoE?}
 
+%- The answer is no, which has profound impact on how web services should be built. [Give a simple example here.] In essence, this means giving each ``priority'', in terms of resources and scheduling, is cost-inefficient and suboptimal. [Give a simple example. resources wasted for users who are screwed already]
+The answer is {\em no}, and it has profound implications for how a web service backend should share its resources among users. 
+The observation that two web requests may experience vastly different WAN-/client-side delay~\cite{timecard,dqbarge} and the fact that QoE has a non-linear relationship with the total page load time~\cite{??} means that the impact of backend response time on QoE naturally {\em varies} among web requests. 
+For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is more likely to be affected by 10ms delay of the web service than a request that has already spent 500ms on the network. 
+In essence, this means that optimizing QoE by assuming the backend delay has the same contribution to QoE among users is both cost-inefficient (\ie wasting resources to optimize requests insensitive to the backend delay) and suboptimal (\ie spending inadequate resources on requests critically dependent on the backend delay). 
+
+\jc{give a figure to contrast optimization of backend in-isolation vs. QoE-aware.}
+
+%- Research goal: This project proposes that the web service backend should be aware of the QoE sensitivity. This effectively changes how one formulates the web service optimization problem.
 \mypara{Research goals}
+In this proposal, we introduce notion of {\bf QoE sensitivity} to conceptualize the impact of the backend response time on QoE, and 
+%examine the benefits of harnessing the heterogeneity of QoE sensitivity among users.
+% We propose to 
+that QoE-awareness can substantially improve the {\em resource/QoE tradeoff}---\ie better QoE without using more resources, or saving resources without degrading QoE.
+% that {\em web services can substantially improve their resource/QoE tradeoffs by harnessing the heterogeneity of QoE sensitivity among users.}
 
-\noindent {\bf Intellectual Merit.~~}
-This proposal applies this idea in the context of cloud services. 
-\jc{what it means to cloud services? requests are going to be treated differently, etc} 
-Specifically, this idea can be applied to many services inside a cloud. \jc{talk about more applications}
-In this project, we plan to answer three key question:
+Some earlier work also takes non-backend delay into account when optimizing cloud-based applications. 
+Timecard~\cite{timecard} allows requests that have shorter network delay to wait longer for the web server to retrieve better ad content. 
+DQBarge~\cite{dqbarge} similarly trades delay for better response quality by monitoring the progress of parallel subtasks and allowing faster subtasks to process longer to get better results without increasing the total response time.
+Also relevant are works that dynamically predict the response-time service-level agreement of cloud applications~\cite{Rich Wolski}, which are driven by the same need to cope with the heterogeneity of non-backend delay across users and over time.
+Our previous work EONA~\cite{eona} pioneers the idea of driving individual systems of the application ecosystem (including web service backend) by user-perceived QoE. 
 
-First, how much potential benefit does this idea have?
-
-Second, how to design a QoE-aware cloud scheduling/resource allocation mechanism?
-
-Third, how to propogate QoE information from users to the cloud?
-
-\noindent {\bf Broader Impacts.~~}
-
-
-\noindent {\bf Keywords.~~} 
+However, none of these works show the benefits of QoE-awareness through the lens of resource/QoE tradeoffs. 
+In this proposal, we follow the roadmap below to answer three key questions.
 
 
+\vspace{0.2cm}
+\noindent{\em Thrust \#1: How much potential benefit can we get?}
 
-QoE matters to everyone!
+\vspace{0.2cm}
+\noindent{\em Thrust \#2: How to re-architect web services to be QoE-aware?}
 
-\subsection{Missed Opportunities}
-\begin{itemize}
+\vspace{0.2cm}
+\noindent{\em Thrust \#3: How to propagate user-perceived QoE information?}
 
-\item Today's tenant: every user should be treated with the same performance goal. Implicit assumption is that the impact of a subsystem is the same on all users.
-
-\item However, the federated architecture means:\\
-1. QoE can be affected by any subsystem\\
-2. Each subsystem serves users with different QoE sensitivities.
-
-\item Fundamental mismatch: some users who are less sensitive to the subsystem get over-optimized, while others who are more sensitive to the subsystem get under-optimized.
-
-\item New approach: minimize the overall impact on QoE. 
-
-\end{itemize}
-
-\subsection{This proposal: Making Cloud QoE-Aware}
-\begin{itemize}
-
-\item How the cloud works today -- agnostic to QoE
-
-\item QoE curve
-
-\item Examples of how things can be done differently!
-
-\end{itemize}
+%- This project proposes to re-architect the web service backend by making it QoE-aware. Our roadmap has three steps.\\
+%1. XXX\\
+%2. YYY\\
+%3. ZZZ
 
 
-\subsection{Research Roadmap:}
-\begin{itemize}
 
-\item How much potential benefit does this idea have?
+% \vspace{2cm}
+% User-perceived quality of experience (QoE) is one of the driving forces behind the Internet ecosystem, which consists of {\em subsystems}, \eg datacenters, CDNs, cellular carriers, backbone networks, content providers, who share resources across users. 
+% % End-to-end Quality of Experience (QoE) is the driving force behind today's Internet application ecosystem, which includes several subsystem
+% % The Internet application ecosystem consists of many subsystems, Cloud, ISP, CDNs, etc, and 
+% Thus, one fundamental question is {\em how to share resources across users in a way that optimizes their overall QoE?}
+% The primary constraint is that these subsystems are {\em federated}: it is impractical to orchestrate a global optimization where they relinquish the control on how their resources are shared. 
+% Instead, the conventional wisdom has been that each subsystem shares its resources among users in a way that optimizes the overall performance metrics within its limit and imposes no differentiation between users if they are ``functionally'' identical (\ie same service, business relationship, etc).
 
-\item How to design a QoE-aware cloud scheduling/resource allocation mechanism?
+% In contrast, we are driven by a simple observation derived directly from the federated nature of the Internet ecosystem.
+% In a subsystem, there is {\em a substantial heterogeneity} among its users with respect to how sensitive their QoE is to the performance of the subsystem, even if these users are functionally identical. 
+% Thus, the right question to ask is {\em not} how a subsystem should optimize the overall performance among users; instead, it should minimize {\em overall impact on user-perceived QoE}, which requires treating users differently, rather than equally, depending on how much impact it has on the user's perceived QoE.
 
-\item How to propagate QoE information from users to the cloud?
+% In this proposal, we apply this idea to improving QoE of web services.
 
-\end{itemize}
+% \mypara{Research goals}
+
+% \noindent {\bf Intellectual Merit.~~}
+% This proposal applies this idea in the context of cloud services. 
+% \jc{what it means to cloud services? requests are going to be treated differently, etc} 
+% Specifically, this idea can be applied to many services inside a cloud. \jc{talk about more applications}
+% In this project, we plan to answer three key question:
+
+% First, how much potential benefit does this idea have?
+
+% Second, how to design a QoE-aware cloud scheduling/resource allocation mechanism?
+
+% Third, how to propogate QoE information from users to the cloud?
+
+% \noindent {\bf Broader Impacts.~~}
+
+
+% \noindent {\bf Keywords.~~} 
+
+
+
+% QoE matters to everyone!
+
+% \subsection{Missed Opportunities}
+% \begin{itemize}
+
+% \item Today's tenant: every user should be treated with the same performance goal. Implicit assumption is that the impact of a subsystem is the same on all users.
+
+% \item However, the federated architecture means:\\
+% 1. QoE can be affected by any subsystem\\
+% 2. Each subsystem serves users with different QoE sensitivities.
+
+% \item Fundamental mismatch: some users who are less sensitive to the subsystem get over-optimized, while others who are more sensitive to the subsystem get under-optimized.
+
+% \item New approach: minimize the overall impact on QoE. 
+
+% \end{itemize}
+
+% \subsection{This proposal: Making Cloud QoE-Aware}
+% \begin{itemize}
+
+% \item How the cloud works today -- agnostic to QoE
+
+% \item QoE curve
+
+% \item Examples of how things can be done differently!
+
+% \end{itemize}
+
+
+% \subsection{Research Roadmap:}
+% \begin{itemize}
+
+% \item How much potential benefit does this idea have?
+
+% \item How to design a QoE-aware cloud scheduling/resource allocation mechanism?
+
+% \item How to propagate QoE information from users to the cloud?
+
+% \end{itemize}
