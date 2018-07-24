@@ -1,10 +1,11 @@
 \vskip -.75em
 \mypara{Summary}
-User-perceived quality of experience (QoE) is a key driving force behind the Internet ecosystem, yet many users still suffer from suboptimal QoE. 
-Unlike previous approaches (\eg cutting tail backend delay, pushing caches closer to end users), this proposal introduces a new dimension to QoE optimization: {\bf awareness of QoE sensitivity}, \ie how sensitive a user's QoE is to the delay of the web service.
-For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is more likely to be affected by 10ms delay of the web service than a request that has already spent 500ms on the network. 
-Such difference of QoE sensitivity is largely ignored in today's web services, but it has profound implications, especially when the requests compete for limited shared resources.
-Our early results show that by making existing web service aware of QoE sensitivity, we could significantly improve web service QoE and save resources compared to designs that are agnostic to QoE sensitivity.
+User-perceived quality of experience (QoE) is a key driving force behind the Internet ecosystem, including web services. 
+Despite much effort to optimize web services, many users still suffer from suboptimal QoE, such as excessively long page load time.
+Unlike previous approaches such as cutting tails of response time or pushing caches closer to end users, this proposal introduces a new dimension for QoE optimization: the {\bf sensitivity of QoE to backend delay}, \ie how sensitive a user's QoE is to the web service backend delay.
+For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is much more likely to be affected by 10ms delay of the web service than a request that has already spent 500ms on the network. 
+Such discrepancy in QoE sensitivity is largely ignored in today's web services, but it has profound implications, especially when many requests compete the limited resources.
+Our early results show that by making existing the web service backend aware of QoE sensitivity, we could improve both QoE and resource efficiency than existing systems that are agnostic to QoE sensitivity.
 In this proposal, we show various benefits of making web services aware of QoE sensitivity (\eg improving request scheduling and resource allocation) and provide a technical roadmap to address common challenges  (\eg estimating QoE sensitivity).
 % (1) We quantify its potential benefits in QoE and resource savings.
 % (2) We propose novel algorithms for QoE-aware scheduling and resource allocation of web services. 
@@ -22,57 +23,66 @@ In this proposal, we show various benefits of making web services aware of QoE s
 \section{Overview}
 
 % - QoE is important and our goal is to improve QoE for Web Services.
-Model web services depend critically on maintaining high {\em Quality of Experience} ({\em QoE}). 
-Thus, one fundamental problem of web service backend is how to share resources across users while optimizing their overall QoE. 
+Large-scale web services (such as Microsoft, Facebook, Google) depend critically on maintaining high {\em Quality of Experience} (QoE) perceived by millions of users. 
+Thus, a fundamental question is how to share resources of web service backend among users so as to optimize their QoE. 
 %Their business models, based on advertisement or subscription, are driven by user engagement, for which QoE is believed to play a vital role (among other factors such as content, user interfaces).
 
-\mypara{Today's limitation}
-One of the determining factors of QoE is the page load time. 
-While QoE can be defined in several ways, it generally consists of the latency of three sources: web server backend, wide-area networks (WANs), and client-side software.
+\mypara{Limitation of today's web services}
+One of the determining factors of QoE is the page load time, which generally consists of three types of latency: wide-area network (WANs) delay, client-side delay, and backend delay.
 %- Web services, like applications running in the cloud, have been basing their optimizations on the goal of improving server-side latency (sometimes the fraction of users meeting some fixed deadline)
-Because of the federated nature of Internet architecture, today web service providers cannot control the end-to-end pipeline of each web services---to them, WANs and clients devices are largely blackboxes operated, not by the web services, but by ISPs, cellular carriers, and device vendors.
+Because of the federated nature of Internet architecture, web service providers do not have full control over all types of delays.
+%---to them, WANs and clients devices are largely blackboxes operated, not by the web services, but by ISPs, cellular carriers, and device vendors.
 %(while web browsers and apps are developed by the web service providers, the client-side performance is largely decided by how OS share resources among multiple applications).
-Thus, instead of optimizing  QoE directly, web services focus on optimizing {\em the backend delay}.
-For instance, they strive to minimize the means/tails of backend delay for each web request, or the fraction of requests whose response times exceed a predetermined deadline (\eg 300ms).
+Thus, instead of optimizing for QoE directly, today's web services focus on reducing the {\em backend delay} with the assumption that different requests have the same {\em QoE sensitivity to backend delay}\footnote{Modulo the content-specific (\eg web page type) or user-specific (\eg free vs. premium subscription) factors.}.
+That is, a backend delay of $n$~ms has the same effect on the QoE of any request.
+As a result, they strive to minimize the mean/tail values of the backend delay or the fraction of requests whose backend delays exceed a predetermined deadline (\eg 300ms).
 %- This project takes a step back and asks a different question: does the latency have the same impact on user QoE? 
-In doing so, all requests are optimized with {\em same} objective function of backend response time; that is a backend delay of $n$~ms has the same effect across different requests.
+% In doing so, 
+%all requests are optimized with the same objective function of backend response time; 
+% an implicit assumption is that different requests have the same {\em QoE sensitivity to backend delay} (modulo content-/user-specific factors, such as web page type or subscription type, etc);
+% that is, a backend delay of $n$~ms has the same effect on the QoE of different requests.
 
-In this proposal, we take a step back and ask: {\em does the backend response time really have the same impact on users' QoE?}
+However, we take a step back and ask: is it true that every request has the {\em same} QoE sensitivity to backend delay?
 
 %- The answer is no, which has profound impact on how web services should be built. [Give a simple example here.] In essence, this means giving each ``priority'', in terms of resources and scheduling, is cost-inefficient and suboptimal. [Give a simple example. resources wasted for users who are screwed already]
-The answer is {\em no}, and it has profound implications for how a web service backend should share its resources among users. 
-The observation that two web requests may experience vastly different WAN-/client-side delay~\cite{timecard,dqbarge} and the fact that QoE has a non-linear relationship with the total page load time~\cite{??} means that the impact of backend response time on QoE naturally {\em varies} among web requests. 
+The answer is {\em no}, which, as we will see, has profound implications for improving the way the web service backend shares its resources among users. 
+Because of the non-linear relationship between page load time and QoE~\cite{??} and the fact that the WAN/client delay varies among requests~\cite{timecard,dqbarge}, {\em the QoE sensitivity to backend delay varies among requests.}
 For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is more likely to be affected by 10ms delay of the web service than a request that has already spent 500ms on the network. 
-In essence, this means that optimizing QoE by assuming the backend delay has the same contribution to QoE among users is both cost-inefficient (\ie wasting resources to optimize requests insensitive to the backend delay) and suboptimal (\ie spending inadequate resources on requests critically dependent on the backend delay). 
+Given the heterogeneity of QoE sensitivity among requests, it is clear that the assumption of backend delay having the same impact to QoE of any request can lead to low cost efficiency (wasting resources to optimize requests insensitive to the backend delay), as well as suboptimal QoE (spending inadequate resources on requests critically dependent on the backend delay). 
 
 \jc{give a figure to contrast optimization of backend in-isolation vs. QoE-aware.}
 
 %- Research goal: This project proposes that the web service backend should be aware of the QoE sensitivity. This effectively changes how one formulates the web service optimization problem.
 \mypara{Research goals}
-In this proposal, we introduce notion of {\bf QoE sensitivity} to conceptualize the impact of the backend response time on QoE, and 
-%examine the benefits of harnessing the heterogeneity of QoE sensitivity among users.
-% We propose to 
-that QoE-awareness can substantially improve the {\em resource/QoE tradeoff}---\ie better QoE without using more resources, or saving resources without degrading QoE.
-% that {\em web services can substantially improve their resource/QoE tradeoffs by harnessing the heterogeneity of QoE sensitivity among users.}
+This proposal introduces ``QoE sensitivity'' as a new dimension to improving the web service backend. 
+We show that by making the backend aware of QoE sensitivity, one can substantially {\em improve resource/QoE tradeoffs} for web service backend---\ie better QoE without using more resources, or saving resources without degrading QoE. 
+% Note that being QoE sensitivity does not require expensive infrastructure changes (\eg adding hardware or changing software stack).
 
-Some earlier work also takes non-backend delay into account when optimizing cloud-based applications. 
-Timecard~\cite{timecard} allows requests that have shorter network delay to wait longer for the web server to retrieve better ad content. 
-DQBarge~\cite{dqbarge} similarly trades delay for better response quality by monitoring the progress of parallel subtasks and allowing faster subtasks to process longer to get better results without increasing the total response time.
-Also relevant are works that dynamically predict the response-time service-level agreement of cloud applications~\cite{Rich Wolski}, which are driven by the same need to cope with the heterogeneity of non-backend delay across users and over time.
-Our previous work EONA~\cite{eona} pioneers the idea of driving individual systems of the application ecosystem (including web service backend) by user-perceived QoE. 
-
-However, none of these works show the benefits of QoE-awareness through the lens of resource/QoE tradeoffs. 
-In this proposal, we follow the roadmap below to answer three key questions.
-
+We divide the proposed research into four thrusts.
+We use the following roadmap to thoroughly examine the benefits and challenges of QoE-sensitivity-aware web service backend.
 
 \vspace{0.2cm}
-\noindent{\em Thrust \#1: How much potential benefit can we get?}
+\noindent{\em Thrust \#1: Making job scheduling aware of QoE sensitivity}
 
 \vspace{0.2cm}
-\noindent{\em Thrust \#2: How to re-architect web services to be QoE-aware?}
+\noindent{\em Thrust \#2: Making resource allocation aware of QoE sensitivity}
 
 \vspace{0.2cm}
-\noindent{\em Thrust \#3: How to propagate user-perceived QoE information?}
+\noindent{\em Thrust \#3: Making congestion control aware of QoE sensitivity}
+
+Common challenges! getting QoE sensitivity, fairness definition!
+
+\mypara{PI qualifications}
+
+
+% \vspace{0.2cm}
+% \noindent{\em Thrust \#1: How much potential benefit can we get?}
+
+% \vspace{0.2cm}
+% \noindent{\em Thrust \#2: How to re-architect web services to be QoE-aware?}
+
+% \vspace{0.2cm}
+% \noindent{\em Thrust \#3: How to propagate user-perceived QoE information?}
 
 %- This project proposes to re-architect the web service backend by making it QoE-aware. Our roadmap has three steps.\\
 %1. XXX\\

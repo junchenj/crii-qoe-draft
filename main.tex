@@ -118,6 +118,24 @@
 %\newcommand{\tightsubsection}[1]{\vspace{-0.0cm}\subsection{#1}\vspace{-0.0cm}}
 \newcommand{\tightsubsubsection}[1]{\vspace{-0.01in}\subsubsection{#1}\vspace{-0.01cm}}
 
+
+\newcommand{\taskref}[1]{\textbf{Thrust~}\ref{#1}}
+\newcommand{\subtaskref}[1]{\textbf{Task~}\ref{#1}}
+\newcounter{tasknmbr}
+\newcounter{tasklabel}
+
+\newcounter{subtasknmbr}[tasknmbr]
+\newcounter{subtasklabel}[tasklabel]
+
+\renewcommand{\thesubtasklabel}{\textbf{\thetasknmbr.\thesubtasknmbr}}
+
+\renewcommand{\thetasklabel}{\textbf{\thetasknmbr}}
+\newenvironment{task}{
+\begin{list}{\textbf{Task }\thetasklabel:~}{\usecounter{tasklabel}\stepcounter{tasknmbr}\setlength{\labelwidth}{0pt}\setlength{\labelsep}{0pt}\setlength{\leftmargin}{0in}\noindent \rule{\textwidth}{1pt}\vspace{-9pt} \rule{\textwidth}{1pt}\vspace{-9pt}\item \bf\em}}{\\[-7pt]\end{list}\vspace{-11pt}\noindent\rule{\textwidth}{1pt}\vspace{-9pt} \rule{\textwidth}{1pt}}
+
+\newenvironment{subtask}{\vspace{-0.05cm}
+\begin{list}{ \textbf{Task }\thesubtasklabel:~}{\usecounter{subtasklabel}\stepcounter{subtasknmbr}\setlength{\labelwidth}{0pt}\setlength{\labelsep}{0pt}\setlength{\leftmargin}{0in}\noindent \rule{\textwidth}{1pt}\vspace{-9pt}\item\em}}{\\[-7pt]\end{list} \vspace{-9pt}\noindent\rule{\textwidth}{1pt}}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Document starts here
 
@@ -153,7 +171,7 @@
 % \end{center}
 
 \begin{center}
-{\bf\Large CRII: NeTS: Towards QoE-Aware Web Services} \\
+{\bf\Large CRII: NeTS: Towards QoE-Aware Web Service Backend} \\
 \smallskip
 \end{center}
 
@@ -221,45 +239,45 @@
 \input{proposed}
 
 
-\subsection{Categorizing the benefits}
-\begin{itemize}
+% \subsection{Categorizing the benefits}
+% \begin{itemize}
 
-\item Mean performance
+% \item Mean performance
 
-\item Cutting tails
+% \item Cutting tails
 
-\item Resource savings
+% \item Resource savings
 
-\item Cheap exploration
+% \item Cheap exploration
 
-\end{itemize}
+% \end{itemize}
 
-\subsection{An Example Using Trace-Driven Simulation}
-\begin{itemize}
+% \subsection{An Example Using Trace-Driven Simulation}
+% \begin{itemize}
 
-\item The QoE Curve
+% \item The QoE Curve
 
-\item Application (Messaging layer)
+% \item Application (Messaging layer)
 
-\item Synthetic trace generation
+% \item Synthetic trace generation
 
-\item Results
+% \item Results
 
-\end{itemize}
+% \end{itemize}
 
-\subsection{Research plan}
+% \subsection{Research plan}
 
-\newpage
-\section{Architecting for QoE-aware cloud}
+% \newpage
+% \section{Architecting for QoE-aware cloud}
 
-\subsection{Theoretical formulation}
+% \subsection{Theoretical formulation}
 
-\begin{itemize}
-\item 
-\end{itemize}
+% \begin{itemize}
+% \item 
+% \end{itemize}
 
-\newpage
-\section{Propogating QoE information}
+% \newpage
+% \section{Propogating QoE information}
 
 
 \input{merits}
