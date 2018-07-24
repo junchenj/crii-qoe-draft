@@ -1,3 +1,5 @@
+%!TEX root = main.tex
+
 \section{Motivation and Taxonomy}
 
 In this section, we present simple-yet-realistic motivating examples that highlight why introducing QoE sensitivity is necessary to improve the QoE/resource tradeoff in web services today. 
@@ -141,22 +143,49 @@ In this task, we will focus on scheduling policies as the locus of improving use
 Specifically, we will address scheduling in the context of message brokers.
 We will show how new QoE-aware message scheduling policies can achieve better QoE than existing scheduling policies without adding resources.
 
-Since we focus on the message broker, the backend delay in this context means the queuing delay (amount of time a request stay in the queue), and the non-backend delay means any delay that is not caused by queuing.
+A message broker implements a scalable and reliable subscriber/publisher service between any pair of subsystems of a backend (\eg web server replica and a distributed database). 
+Take RabbitMQ as a canonical example. 
+Logically, it maintains a number (at most 255) of queues, the queues have different priorities, and within each queue, the messages, or requests in our contenxt, are scheduled using simple First-In-First-Out policy (FIFO) policy.
+In this section, the backend delay means the queuing delay (amount of time a request stay in the queue), and the non-backend delay means any delay that is not caused by queuing.
 
 \subsection{Why a new scheduling policy is needed}
 
-To show the need of a new QoE-driven scheduling policy, Figure~\ref{??} considers a simple example in which there are three identical requests (\ie their applications are of the same priority) in the queue and each request has a different non-backend delay.
-We compare the scheduling outcomes of three policies: 
-(1) First-In-First-Out policy (FIFO), \ie the default policy if only backend delay is considered,
-(2) Earliest-Deadline-First (EDF), \ie in which we impose the same deadline on the sum of queuing delay and non-queuing delay for all requests, and 
-(3) the optimal scheduling policy (Optimal) that maximizes average QoE)
-The requests are put in a single queue, and each has a different non-backend delay.
-We assume that the page load time of a request is simply the sum of the non-backend delay, a fixed processing delay, and the queuing delay of number of jobs ahead of it times the processing delay.
+% - fifo and etc don't work
+To show the need of a new policy for QoE-driven  scheduling, we consider a simple example (shown in Figure~\ref{??} ) in which there are three identical requests (\ie they are of the same priority) in the queue but they have different non-queuing delays.
+We compare three policies: 
+(1) FIFO, which is the default policy for equal-priority requests.
+(2) Earliest-Deadline-First (EDF), which uses a fixed deadline on the sum of queuing delay and non-queuing delay and prioritizes requests whose non-queuing delay is closest to the deadline, and 
+(3) the optimal scheduling policy (OPT) that maximizes average QoE.
+We assume that the page load time of a request is the sum of the non-queuing delay and the queuing delay (that is, the number of jobs ahead of it times the per-request processing delay).
+Figure~\ref{??}  shows the outcome of running each policy. 
+We can see that OPT outperforms FIFO, because it is agnostic to non-queuing delay
+OPT also outperforms EDF with various deadlines, even though it somehow takes the non-queuing delay into account (by imposing a deadline on the total of queuing and non-queuing delay).
+This is because how close a request's non-queuing delay is to the deadline is {\em still} agnostic to the sensitivity of QoE to the queuing delay. 
+Remember in Figure~\ref{??}, the QoE sensitivity does not grow monotonically to the non-backenc(queuing) delay. 
 
 \subsection{Technical challenges}
 
-\subsection{Proposed research}
+The new QoE-aware scheduling policy should be {\em near-optimal} (\ie achieve QoE close to the optimal scheduling outcomes) and {\em efficient} (\ie constant decision time on each incoming request).
+To see why it is challenging to meet both requirements simultaneously, let us consider two baselines.
+On one hand, standard approximating\footnote{Unfortunately, optimzing a non-contex curve objective function, as in our case, requires running complex algorithms, whose runtime increases super-linearly with the number of variables~\cite{??}.} algorithms (\eg~\cite{??}) often requires non-constant overhead to compute the scheduling order of each request. 
+On the other hand, fast scheduling algorithms can be suboptimal. 
+For instance, one efficient scheduling algorithm is to give each request a priority that is proportional to the {\em slope} of its non-queuing delay on the QoE-delay curve. 
+This makes sense, because if the request were to stay in the queue for a (short) fixed amount of queuing delay, this slop indicates exactly how much QoE degradation will be caused by the queuing delay, and the decision runtime is constant for each request.
+However, the queuing delay does vary among requests as well as over time (as it might be preemptived by future requests), and the resulting QoE might suffer.
+If the queuing delay is non-trivial, the slope of a request's non-queuing delay can be both an overestimate or underestimate of the acutal QoE sensitivity of a request. 
+In Figure~\ref{??}, for instance, if the queuing delay is 200ms, a request with 1100ms non-queuing delay will be believed as insensitive to the queuing delay, while after 200ms queuing, it actually will see significant drop in QoE. 
 
+Moreover, the new scheduling policy has to be {\em amenable} to the implementation of existing message brokers. 
+For instance, in RabbitMQ, once a request is pushed to a FIFO queue associated with some priority, and cannot be easily changed to another FIFO queue. 
+That means, the related ordering of two requests cannot be changed once they are scheduled.
+For instance, the aforementioned slope-based scheduling algorithm cannot be easily fixed by re-assigning a priority that reflects the slope after the amount of queuing delay.
+(Note this does not preclude the possibility of preemption by a future request if we assign it with a high priority.)
+
+\subsection{Proposed research}
+We propose to develop new scheduling policies that leverage the heterogeneity of QoE sensitivity across requests to improve user-perceived QoE. 
+One potential idea is to rely on the fact that the number of requests and the distribution of their non-queuing delay is relatively stable at a timescale of several seconds. 
+Thus, we can periodically recalculate the priority of a request with certain non-queuing delay by assuming that future requests will be drawn from certain distribution.
+Then, the scheduling problem can save this mapping in a table, and determine the priority of any new request by looking-up the table. 
 
 
 \section{Better congestion control}
