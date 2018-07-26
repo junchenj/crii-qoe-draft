@@ -1,4 +1,5 @@
 \vskip -.75em
+\jc{yet another QoE improvement doesn't sound very exciting}
 \mypara{Summary}
 User-perceived quality of experience (QoE) is a key driving force behind the Internet ecosystem, including web services. 
 Despite much effort to optimize web services, many users still suffer from suboptimal QoE, such as excessively long page load time.
@@ -49,6 +50,8 @@ The answer is {\em no}, which, as we will see, has profound implications for imp
 Because of the non-linear relationship between page load time and QoE~\cite{??} and the fact that the WAN/client delay varies among requests~\cite{timecard,dqbarge}, {\em the QoE sensitivity to backend delay varies among requests.}
 For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is more likely to be affected by 10ms delay of the web service than a request that has already spent 500ms on the network. 
 Given the heterogeneity of QoE sensitivity among requests, it is clear that the assumption of backend delay having the same impact to QoE of any request can lead to low cost efficiency (wasting resources to optimize requests insensitive to the backend delay), as well as suboptimal QoE (spending inadequate resources on requests critically dependent on the backend delay). 
+\jc{bring up some concrete improvement numbers}
+\jc{need to highlight that this is not because application differents}
 
 \jc{give a figure to contrast optimization of backend in-isolation vs. QoE-aware.}
 
@@ -61,6 +64,7 @@ We show that by making the backend aware of QoE sensitivity, one can substantial
 We divide the proposed research into four thrusts.
 We use the following roadmap to thoroughly examine the benefits and challenges of QoE-sensitivity-aware web service backend.
 
+
 \vspace{0.2cm}
 \noindent{\em Thrust \#1: Making job scheduling aware of QoE sensitivity}
 
@@ -70,7 +74,9 @@ We use the following roadmap to thoroughly examine the benefits and challenges o
 \vspace{0.2cm}
 \noindent{\em Thrust \#3: Making congestion control aware of QoE sensitivity}
 
-Common challenges! getting QoE sensitivity, fairness definition!
+\jc{why these applications?}
+
+\jc{Common challenges! getting QoE sensitivity, fairness definition!}
 
 \mypara{PI qualifications}
 
