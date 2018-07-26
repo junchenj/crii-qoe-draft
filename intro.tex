@@ -1,12 +1,16 @@
+%!TEX root = main.tex
 \vskip -.75em
-\jc{yet another QoE improvement doesn't sound very exciting}
+% \jc{yet another QoE improvement doesn't sound very exciting}
 \mypara{Summary}
-User-perceived quality of experience (QoE) is a key driving force behind the Internet ecosystem, including web services. 
-Despite much effort to optimize web services, many users still suffer from suboptimal QoE, such as excessively long page load time.
-Unlike previous approaches such as cutting tails of response time or pushing caches closer to end users, this proposal introduces a new dimension for QoE optimization: the {\bf sensitivity of QoE to backend delay}, \ie how sensitive a user's QoE is to the web service backend delay.
+User-perceived QoE (quality of experience) is a key driving force behind the ecosystem of web services.
+QoE depends critically on web page loading time, yet despite tremendous efforts to speedup page loading time,
+%(\eg cutting tail latency via redundancy or pushing caches closer to end users), 
+many users still suffer from suboptimal QoE.
+%Unlike previous approaches such as cutting tails of response time or pushing caches closer to end users, 
+This proposal introduces a new dimension for QoE optimization: harnessing the heterogeneity of {\bf sensitivity of QoE to backend delay}.%, \ie how sensitive a user's QoE is to the web backend delay.
 For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is much more likely to be affected by 10ms delay of the web service than a request that has already spent 500ms on the network. 
-Such discrepancy in QoE sensitivity is largely ignored in today's web services, but it has profound implications, especially when many requests compete the limited resources.
-Our early results show that by making existing the web service backend aware of QoE sensitivity, we could improve both QoE and resource efficiency than existing systems that are agnostic to QoE sensitivity.
+Such discrepancy in QoE sensitivity is largely ignored in today's web services, but we show that it has profound implications, especially when requests compete for limited resources.
+Our early results show that by making existing the web backend aware of QoE sensitivity, we could improve both QoE and resource efficiency than existing solutions.
 In this proposal, we show various benefits of making web services aware of QoE sensitivity (\eg improving request scheduling and resource allocation) and provide a technical roadmap to address common challenges  (\eg estimating QoE sensitivity).
 % (1) We quantify its potential benefits in QoE and resource savings.
 % (2) We propose novel algorithms for QoE-aware scheduling and resource allocation of web services. 
@@ -24,18 +28,21 @@ In this proposal, we show various benefits of making web services aware of QoE s
 \section{Overview}
 
 % - QoE is important and our goal is to improve QoE for Web Services.
-Large-scale web services (such as Microsoft, Facebook, Google) depend critically on maintaining high {\em Quality of Experience} (QoE) perceived by millions of users. 
-Thus, a fundamental question is how to share resources of web service backend among users so as to optimize their QoE. 
+\noindent Large-scale web service providers (such as Microsoft, Facebook, Google) spend tremendous efforts to maintain high user-perceived {\em QoE} (Quality of Experience). 
+The fundamental question is how to share resources of the web backend across users so as to optimize their overall QoE. 
 %Their business models, based on advertisement or subscription, are driven by user engagement, for which QoE is believed to play a vital role (among other factors such as content, user interfaces).
 
 \mypara{Limitation of today's web services}
-One of the determining factors of QoE is the page load time, which generally consists of three types of latency: wide-area network (WANs) delay, client-side delay, and backend delay.
+One of the determining factors of QoE of a web request is its page load time, which generally consists of three types of latency: client-side delay, wide-area network (WANs) delay, and backend delay.
 %- Web services, like applications running in the cloud, have been basing their optimizations on the goal of improving server-side latency (sometimes the fraction of users meeting some fixed deadline)
-Because of the federated nature of Internet architecture, web service providers do not have full control over all types of delays.
+%Because of the federated nature of Internet architecture, web service providers do not have full control over all types of delays.
 %---to them, WANs and clients devices are largely blackboxes operated, not by the web services, but by ISPs, cellular carriers, and device vendors.
 %(while web browsers and apps are developed by the web service providers, the client-side performance is largely decided by how OS share resources among multiple applications).
-Thus, instead of optimizing for QoE directly, today's web services focus on reducing the {\em backend delay} with the assumption that different requests have the same {\em QoE sensitivity to backend delay}\footnote{Modulo the content-specific (\eg web page type) or user-specific (\eg free vs. premium subscription) factors.}.
-That is, a backend delay of $n$~ms has the same effect on the QoE of any request.
+With web service providers only controlling the web backend, the performance metric they focus on optimizing is the 
+%Thus, instead of optimizing for QoE directly, today's web services focus on reducing the 
+%different requests have the same {\em QoE sensitivity to backend delay}
+{\em backend delay} with the assumption that a backend delay has of $n$~ms has the {\em same} impact on any request.\footnote{Modulo the content-specific (\eg web page type) or user-specific (\eg free vs. premium subscription) factors.}
+% That is, a backend delay of $n$~ms has the same effect on the QoE of any request.
 As a result, they strive to minimize the mean/tail values of the backend delay or the fraction of requests whose backend delays exceed a predetermined deadline (\eg 300ms).
 %- This project takes a step back and asks a different question: does the latency have the same impact on user QoE? 
 % In doing so, 
