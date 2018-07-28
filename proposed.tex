@@ -71,8 +71,15 @@ What is new is their corollary that requests have different QoE sensitivity to b
 %We will give more concrete examles in \S\ref{sec:design}.
 
 \subsection{New opportunities}
+\label{subsec:opportunities}
 At a high level, the heterogeneous QoE sensitivity means that rathter than treating all requests as having equal sensitivity to the same amount of backend resources, the backend should instead allocate idle resources to requests that are more sensitive to backend delay.
 To see it in action, suppose that request $A$ with non-backend delay $x_a$ is more sensitive to the backend delay (the red area of Figure~\ref{fig:qoe-curve}) than request $B$ with non-backend delay $x_b$ (the green or yellow area of Figure~\ref{fig:qoe-curve}). Now, if the backend resource allocation is such that one of them will get a backend delay of $\delta_1$ and the other one $\delta_2$, $\delta_1>\delta_2$. A QoE-agnostic method may make a random decision (\eg 50\% probability $A$ will get an end-to-end delay of $x_a+\delta_1$), but a QoE-driven method should instead assign the smaller backend delay $\delta_2$ to $A$, because $A$ is more sensitive to backend delay.
+
+Here, we run a simple simulation to quantify this improvement using the QoE curve shown in Figure~\ref{fig:qoe-curve}. 
+Consider a set of 1000 requests whose non-backend delays are such that 29.8\% draw uniformly randomly from 0-1200ms (green part), 41.5\% from 1200-2200ms (red part), and 28.7\% from 2200ms to 6000ms (yellow part). 
+Suppose we pre-generated 1000 backend delay values uniformly between 50-450ms. 
+Now, we consider that a baseline will pick a random backend delay from the 1000 values (without replacement) for each request. The average QoE values is 29 (duration in minutes spent on the website).
+In contrast, if we assign the lowest 41.5\% backend delay values to the 41.5\% between 1200-2200ms, and the rest 
 
 This simple example illustrates that the opportunities of QoE-driven depend on two factors.
 First, both requests whose QoE is sensitive to the backend and those whose QoE is not must be present. As shown in Figure~\ref{fig:qoe-curve}, we found 41.5\% requests have QoE that is sensitive to the backend delay (red region between 1200ms and 2200ms), and the rest (29.8\% in the green region and 28.7\% in the yellow region) have QoE that is not as sensitive to the backend delay.
@@ -134,8 +141,7 @@ We categorize the performance advantages of a QoE-driven backend over today's ba
 
 \mypara{Improving QoE} 
 First and foremost, a QoE-driven backend can achieve better QoE than a traditional one, by allocating resources in a way that more explicitly optimizes the total QoE. 
-Here, we use a simple trace-driven simulation to quantify this potential improvement. 
-Take Figure~\ref{fig:}
+An example usecase has been discussed in details in \S\ref{subsec:opportunities}
 %In contrast to today's web backends which focus on the mean (or percentiles) of backend delay, we argue that they should instead {\em minimize the impact of backend delay on QoE}, so more resources (\eg higher priority) should be given to requests whose QoE is more sensitive to the backend delay. 
     
 \mypara{Mitigating the impact of performance outliers} 
