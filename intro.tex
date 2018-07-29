@@ -2,19 +2,22 @@
 %\vskip -.75em
 %\mypara{Summary}
 % \jc{yet another QoE improvement doesn't sound very exciting}
-User-perceived QoE (quality of experience) is a key driving force behind the ecosystem of web applications.
-QoE depends critically on web page loading time, yet despite tremendous efforts to speedup page loading time,
+The ecosystem of web applications critically depends on maintaining desirable user-perceived QoE (quality of experience).
+% QoE depends critically on web page loading time, 
+Yet despite tremendous efforts,
 %(\eg cutting tail latency via redundancy or pushing caches closer to end users), 
 many users still suffer from suboptimal QoE.
 %Unlike previous approaches such as cutting tails of response time or pushing caches closer to end users, 
-This proposal introduces a new dimension for QoE optimization: harnessing the heterogeneity of {\bf QoE sensitivity to backend delay} across users. More importantly, such heterogeneity is prevalent even if the users request the same type of application/service.
+This proposal introduces a new dimension for web QoE optimization that has been ignored by today's web backend: harnessing the {\em inherent heterogeneity} of how much impact backend delay has on the QoE of different users, even if they request the same type of application/service.
+% {\bf QoE sensitivity to backend delay} across users. More importantly, such heterogeneity is prevalent even if the users request the same type of application/service.
 %, \ie how sensitive a user's QoE is to the web backend delay.
-For instance, a web request that has spent 50ms on wide-area networks before reaching the web server is much more likely to be affected by 10ms delay of the web service than a request that has already spent 500ms on the network. 
-Such performance-induced discrepancy in QoE sensitivity is largely ignored in today's web services, but as we show, it has profound implications, especially when requests compete for limited resources.
-In essence, web requests previously seen by the backend as identical can now be exploited to allocate resources efficiently by favoring requests whose QoE is more sensitive to the backend delay.
+For instance, a web request that has spent 50ms on wide-area networks before reaching the web server tends to be more sensitive to 10ms delay of web backend than a request that has already spent 500ms on the network does. 
+Such discrepancy in QoE's sensitivity to backend delay has profound implications on how web backend should allocate its limited resources across requests.
+In essence, web requests previously seen as indistinguishable by the backend can now be treated differently such that requests whose QoE is more sensitive to backend delay will be improved without drop of other requests' QoE.
 %We show early promising result that by making existing the web backend aware of QoE sensitivity, we could improve both QoE and resource efficiency than existing solutions.
-In proposed work, we will investigate new opportunities to improve QoE and save resources by making web services aware of QoE sensitivity 
-(\eg better scheduling policies and replica selection policies) and provide a technical roadmap to address the key challenges  (\eg estimating QoE sensitivity, and balancing fairness and efficiency).
+To fully unleash these potentials, we propose to re-architect today's web backend by elevating the sensitivity of QoE to the backend delay as a key factor in the control logic of web backend.
+% investigate new opportunities to improve QoE and save resources by making web services aware of QoE sensitivity (\eg better scheduling policies and replica selection policies) and 
+We will provide a technical roadmap to quantify the potential improvement of QoE-driven web backend in the wild and address the key challenges, including QoE-driven scheduling policies and replica selection policies, estimating the QoE sensitivity of each request, and addressing fairness issues.
 % (1) We quantify its potential benefits in QoE and resource savings.
 % (2) We propose novel algorithms for QoE-aware scheduling and resource allocation of web services. 
 % (3) We present novel system designs and implement prototypes that make web services QoE-aware in practice.
