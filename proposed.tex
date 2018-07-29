@@ -156,7 +156,7 @@ Although ideally, we would like the multiple subsystems of the web backend to jo
 
 \section{Quantifying Potential Benefits in the Wild}
 \begin{task}
-We will carry out measurement studies to quantify various benefits---in QoE and resource-efficiency---of a QoE-aware web service backend.
+We will carry out measurement studies to quantify the benefits---in QoE and resource-efficiency---of a QoE-aware web service backend.
 \end{task}
 
 %The heterogeneity of QoE sensitivity across requests opens up many new opportunities to strike better resource/QoE tradoffs. 
@@ -165,50 +165,59 @@ In this section, we outline a measurement study to characterize and quantify the
 %a taxonomy to categorize various possibilities of using the heterogeneous QoE sensitivity to improve the web service backend.%, and show simple-yet-realistic motivating examples to highlight two concrete use cases.
 
 \subsection{Exploring the space of QoE-driven benefits}
+\label{subsec:benefits}
 
-%\mypara{Benefits}
-As the first step,  we categorize the use cases of a QoE-driven backend over today's backend systems in four types:
-
-\mypara{Improving QoE} 
-First and foremost, a QoE-driven backend can achieve better QoE than a traditional one, by allocating resources in a way that more explicitly optimizes the total QoE. 
-An example usecase has been discussed in details in \S\ref{subsec:example}.
+\mypara{Performance metrics that can benefit}
+As the first step, we categorize performance metrics along which a QoE-driven backend outperforms today's backend systems.
+\begin{packeditemize}
+\item{\em Improving QoE without adding more resources:} 
+First and foremost, a QoE-driven backend can achieve better QoE than a traditional one by allocating resources in a way that more explicitly optimizes the total QoE. 
+The basic idea is to switch resources from requests that are insensitive to backend delay to those that are sensitive.
+We have seen an example of this in \S\ref{subsec:example}.
 %In contrast to today's web backends which focus on the mean (or percentiles) of backend delay, we argue that they should instead {\em minimize the impact of backend delay on QoE}, so more resources (\eg higher priority) should be given to requests whose QoE is more sensitive to the backend delay. 
-    
-\mypara{Mitigating the impact of performance outliers} 
-A common challenge of web service backends is how to trim the performance outliers---requests that experience excessively long backend delay, \eg due to server garbage collections. 
-Rather than trying to eliminate outliers, the QoE sensitivity offers a new approach to {\em reduce the degradation on QoE due to outliers}.
-Then instead of spreading requests evenly across servers, we can profile the performance of servers and predict the servers that are likely to have outliers~\cite{ganesh's trimming}, and assign requests with less QoE sensitivity to these servers, and keep requests with higher QoE sensitivity away from these servers. 
-    
-\mypara{Resource savings}
-Similarly, one can reduce resource consumption, and possibly save energy, by spending less resources to optimize requests of lower QoE sensitivity. For instance, this can be done by deprioritizing the low QoE-sensitivity requests or sending them to servers with higher load, 
-Doing so may be seen as unfair, but as we will discuss in \S\ref{sec:arch}, this can still be fair in the sense that each request gets an equal treatment (degradation) on the QoE.
-    
-\mypara{Cost-efficient explorations}
-Finally, to cope with dynamic resource availability, backend systems (\eg CDN) maintain the visibility of many decisions (\eg edge clusters), by sending a fraction of request to randomly explore suboptimal decisions or injecting active probing traffic.
-Neither approach is ideal. 
-We take a different approach---one can use the requests of low QoE sensitivity to probe the suboptimal decisions, as long as the QoE degradation does not exceed that of sending a request of high QoE sensitivity to the optimal decision.
-This way, we can maintain visibility with less impact on QoE.
-%\end{packeditemize}
-Note that these benefits can be realized without expensive adding more hardware or changing software stack, and can be done incrementally (they have no inter-dependency).
 
-\mypara{Subsystems that might benefit}
-These use cases can manifest themselves in different subsystems (Figure~\ref{fig:framework}) of a web backend. 
+\item{\em Saving resources without hurting QoE:}
+Similarly, one can reduce resource consumption (and thus save energy) by spending less resources to those requests of lower sensitivity to the backend delay. For instance, this can be done by allocating less CPU cycles or memory to servers that serve these requests or sending them to servers with higher load.
+
+\item{\em Mitigating the impact of performance outliers:} 
+Web backends are susceptible to performance outliers---excessively long delay due to \eg server garbage collections. 
+Rather than trimming the outliers, we take a different approach---reducing the {\em degradation} of QoE caused by outliers.
+For instance, we can profile the performance of servers, and assign only requests with less QoE sensitivity to the those likely to have outliers~\cite{ganesh's trimming}. 
+    
+\item{\em Cost-efficient explorations:}
+To cope with dynamic resource availability and network conditions, web backends need to monitor the performance of multiple decisions (\eg edge clusters) by sending some random requests to use suboptimal decisions or injecting active probing traffic, neither of which is ideal.
+We take a different approach---we can use the requests that are less sensitive to backend delay to probe the suboptimal decisions, as long as the resulting QoE degradation is below the overall QoE improvement.
+\end{packeditemize}
+
+%does not exceed the QoE gain of sending a request of high QoE sensitivity to the optimal decision.
+% This way, we can maintain visibility with less impact on QoE.
+%\end{packeditemize}
+
+Note that at first glance, these optimizations may seem unfair, but as we will discuss in \S\ref{sec:arch}, this can still be fair in the sense that each request gets an equal treatment (degradation) on the QoE.
+Importantly, these benefits can be realized without expensive adding more hardware or changing software stack, and can be done incrementally (they have no inter-dependency).
+
+\mypara{Use cases that can benefit}
+The improvements along performance metrics can manifest themselves in different use cases in web backend (Figure~\ref{fig:framework}): 
 \begin{packeditemize}
 
 \item {\em Resource allocation:} 
-Better allocation of resources, such as CPU, RAM, network bandwidth, that are shared by multiple simultaneous requests.
+Better allocation of resources, such as CPU, RAM, network bandwidth, that are shared by multiple concurrent requests. 
 
 \item {\em Scheduling:}
-Scheduling across requests basically shares the resource---slot in a queue---along temporal dimension. Scheduling occurs pervasively in distributed systems, \eg message broker, job scheduler, etc.
+Scheduling of requests shares resource (\eg slot in a queue) along temporal dimension.
+Uses of scheduling include message broker, job scheduler, etc.
 
 \item {\em Replica selection:}
-Having multiple replicas is another way of scaling-up web services (\eg web servers, nodes of a database, partition-aggregating). These replicas' performance depends critically on how requests are assigned.
+Performance of replicas depends critically on how requests are assigned.
+Uses of replica selections include selections of web servers, nodes of a distributed key-value store (or database), partition-aggregating nodes.
 
 \end{packeditemize}
 
+Besides web services, it is worth noting that video streaming providers can use similar ideas to improve video QoE. For instance, the video servers can allocate more resources (\eg bandwidth, I/O cycles) to video sessions whose buffer is about to be empty (which means the QoE is more sensitive) than to those whose buffer is long enough.
+
 \subsection{What-if analysis of potential improvement}
 
-Then, we examine under what conditions can QoE-driven web backend significantly outperform traditional ones. 
+Next, we examine that under what conditions can QoE-driven web backend significantly outperforms traditional ones. 
 The simple example in \S\ref{subsec:example} illustrates that the improvement of QoE-driven depend on three factors.
 
 Firstly, the workload must be a mix of requests whose QoE is sensitive to the backend and those whose QoE is insensitive. 
@@ -225,11 +234,12 @@ Prior measurement studies (\eg~\cite{dqbarge,mysterymachine,timecard}) have show
 \subsection{Proposed research}
 %- Quantifying the QoE-delay curve in the wild
 We propose to run measurement studies and trace-driven analysis to characterize the QoE-driven opportunities along three aspects.
-We will perform a mix of user studies and trace-driven analysis to create
+First, we will perform a mix of user studies and trace-driven analysis to create QoE curve for various web sites (\eg Alexa top sites) and different users (\eg various devices, demographic areas) to confirm that the impact of backend delay on QoE does varies.
 %- Quantifying the heterogeneity of QoE sensitivity
-%
+Second, we will work with large content providers to gain insights as to whether real-world workload is a mix of sensitive and insensitive requests and the backend delay is variable. 
+Based on our discussion with Microsoft, it is expected that this task can use real-world data.
 %- Impact of QoE-aware logic on QoE (maybe delay is too small to be noticed anyway)
-
+Finally, to efficiently explore the whole space of advantages (performance metrics and use cases presented in \S\ref{subsec:benefits}), we plan to scale the evaluation by developing a trace-driven simulator that uses real trace to estimate the potential improvement without actually deploying QoE-driven web backend.
 
 
 
@@ -238,10 +248,14 @@ We will perform a mix of user studies and trace-driven analysis to create
 \label{sec:design}
 
 \begin{task}
-We will develop new scheduling and replica selection policies that leverage the heterogeneity of QoE sensitivity across requests to improve user-perceived QoE.
+We will develop new control policies (including scheduling, replica selection) that leverage the heterogeneity of QoE sensitivity across requests to improve the QoE/resource tradeoffs.
 \end{task}
 
-\subsection{Why new algorithms are needed?}
+In this task, we will focus on control logic as the locus of improving QoE by leveraging the heterogeneity of QoE sensitivity across requests. 
+We will start with why traditional scheduling and replica selection policies are insufficient.
+Then we will highlight technical challenges behind the QoE-driven control logic.
+
+\subsection{Why new policies are needed?}
 
 \mypara{Message scheduling}
 % - fifo and etc don't work
@@ -288,6 +302,8 @@ For instance, in RabbitMQ, once a request is pushed to a FIFO queue associated w
 That means, the related ordering of two requests cannot be changed once they are scheduled.
 For instance, the aforementioned slope-based scheduling algorithm cannot be easily fixed by re-assigning a priority that reflects the slope after the amount of queuing delay.
 (Note this does not preclude the possibility of preemption by a future request if we assign it with a high priority.)
+
+\jc{cross subsystem optimization}
 
 \subsection{Proposed research}
 We propose to develop new scheduling policies that leverage the heterogeneity of QoE sensitivity across requests to improve user-perceived QoE. 
