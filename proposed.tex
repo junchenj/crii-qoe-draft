@@ -1,27 +1,27 @@
 %!TEX root = main.tex
 
 \section{Motivation and Framework}
-In this section, we setup the context by introducing how today's web backends optimize QoE.
-Then we show the observation that there is a great heterogeneity in the sensitivity of QoE to backend delay across requests, which inspires a new QoE-driven approach to web backend design.
+In this section, we set up the context by introducing how today's web backends optimize QoE.
+Then we show the key insight that there is a great heterogeneity in QoE's sensitivity to backend delay across requests, which inspires the proposed QoE-driven web backend.
 %Then we give the empirical observation that there is great heterogeneity in the sensitivity of QoE to backend delay across requests, which inspires new opportunities to improve the QoE/resource tradeoffs of the web service backends without adding new resources. 
 %Finally, we give a framework that contrasts today's approach with our proposed one.
 
 \subsection{Today's approach}
 % - Architecture of web service
 %\mypara{A canonical architecture} 
-\begin{wrapfigure}{r}{0.43\linewidth}
+\begin{wrapfigure}{r}{0.4\linewidth}
 	\centering
-	\includegraphics[width=0.95\textwidth]{figs/background.pdf}
-	\caption{High-level architecture of today's web service and the lifecycle of a web request.}
+	\includegraphics[width=1.0\textwidth]{figs/background.pdf}
+	\caption{High-level architecture of web service and the workflow of a web request.}
 	\label{fig:background}
 \end{wrapfigure}
-Figure~\ref{fig:background} depicts the high-level architecture of large-scale web services, and the lifecycle of a web request.
-When a web request is issued by a user (\eg loading of a front page), it typically involves three components---client software, wide-area networks (WANs), and the backend---before the response is showed to the user.
+Figure~\ref{fig:background} depicts the high-level architecture of large-scale web services, and the typical workflow of a web request.
+A web request (\eg loading of a front page) typically involves three components---client software, wide-area networks (WANs), and the backend---before the response is showed to the user.
 The delay of each component contributes to the end-to-end delay and thus the user-perceived QoE (assuming the requested data is not cached locally by the client/ISP, etc). 
 %In today's federated Internet architecture, the web service provider typically only has the control over the backend-induced delay. 
 %Note that although client-side browsers/apps are developed by web service providers, the client-side delay is largely decided by how OS share resources among applications. 
-A web service backend can be viewed as solving a resource sharing problem: optimizing the performance of many requests using a limited amount of resources. 
-With the web service providers only controling the backend and the backend-induced delay\footnote{Although client-side browsers/apps are developed by web service providers, the client-side delay is largely decided by how OS share resources among applications.}, they seek to minimize the backend delay. 
+A web backend can be viewed as solving a resource sharing problem: optimizing the performance of many requests using a limited amount of resources. 
+With the web service providers only controlling the backend and the backend-induced delay\footnote{Although client-side browsers/apps are developed by web service providers, the client-side delay is largely decided by how OS share resources among applications.}, they seek to minimize the backend delay. 
 
 
 % - Optimization metrics of each components: not QoE specific!
@@ -34,18 +34,17 @@ Here, we only consider requests of the same application-level type, \eg content 
 \subsection{Key insight: Heterogeneity of QoE sensitivity}
 %\jc{throw in some concrete improvement numbers}
 
+\begin{wrapfigure}{r}{0.45\linewidth}
+	\centering
+	\includegraphics[width=0.95\textwidth]{figs/qoe-curve.pdf}
+	\caption{QoE curve: relationship between QoE and the end-to-end delay of a request.}
+	\label{fig:qoe-curve}
+\end{wrapfigure}
 Contrary to the assumption of backend delay having equal impact on QoE for any request, our key observation is that 
 {\em the sensitivity of QoE to the backend delay varies across requests.}
 %Our key observation is that the impact of backend delay on the QoE of a request actually depends on how much non-backend delay (Figure~\ref{fig:background}) the request experiences, including the client-induced and WAN-induced delays. 
 %In other words, {\em the sensitivity of QoE to the backend delay varies across requests.} 
 %\mypara{Why QoE sensitivity varies}
-
-\begin{wrapfigure}{r}{0.5\linewidth}
-	\centering
-	\includegraphics[width=0.95\textwidth]{figs/qoe-curve.pdf}
-	\caption{QoE curve showing the relationship between QoE and the end-to-end delay of a request.}
-	\label{fig:qoe-curve}
-\end{wrapfigure}
 Figure~\ref{fig:qoe-curve} illustrates this observation using a dataset of \fillme web requests. The dataset includes all requests to one of the Alexa top-50 pages~\cite{??} over a span of 24 hours from \fillme countries, thus representing a decent spatio-temporal coverage of users while avoiding the impact of content-specific factors on QoE. 
 The figure shows the relationship between QoE and the end-to-end delay of a request, which we refer to as the {\em QoE curve}.
 %It is based on \fillme requests to a particular page (\fillme), thus avoiding the impact of content on QoE. 
@@ -96,15 +95,15 @@ Even resource allocation policies that might naturally prioritize some requests 
 
 \subsection{Framework}
 \label{subsec:framework}
-\begin{wrapfigure}{r}{0.5\linewidth}
-	\centering
-	\includegraphics[width=0.95\textwidth]{figs/framework.pdf}
-	\caption{Framework of QoE-driven web backend.}
-	\label{fig:framework}
-\end{wrapfigure}
 Next we present a high-level framework (Figure~\ref{fig:framework}) of transforming today's web service backend with QoE-aware optimization.
 Our design takes a pragmatic stance and confine ourselves to the minimal necessary changes on today's web backend.
 
+\begin{wrapfigure}{r}{0.45\linewidth}
+	\centering
+	\includegraphics[width=1.0\textwidth]{figs/framework.pdf}
+	\caption{QoE-driven web backend framework.}
+	\label{fig:framework}
+\end{wrapfigure}
 We envision each individual subsystem (\eg web servers, messaging brokers, key-value stores, etc) has a resource-allocation control logic (\eg scheduling, queuing logic, replica selection logic, congestion control).
 In a QoE-driven web backend, the control logic of a subsystem takes in as part of its input the QoE sensitivity of any incoming request---an estimate on its non-backend and the corresponding position on the QoE-latency curve. 
 We will discuss how this information could be obtained in  \S\ref{sec:arch}.
@@ -251,66 +250,102 @@ Finally, to efficiently explore the whole space of advantages (performance metri
 We will develop new control policies (including scheduling, replica selection) that leverage the heterogeneity of QoE sensitivity across requests to improve the QoE/resource tradeoffs.
 \end{task}
 
-In this task, we will focus on control logic as the locus of improving QoE by leveraging the heterogeneity of QoE sensitivity across requests. 
-We will start with why traditional scheduling and replica selection policies are insufficient.
-Then we will highlight technical challenges behind the QoE-driven control logic.
+In this task, we will focus on the control logic of scheduling and replica selection as the locus of QoE-driven optimization. 
+We start with why traditional scheduling and replica selection policies are insufficient.
+Then we highlight technical challenges behind the QoE-driven control logic.
 
-\subsection{Why new policies are needed?}
+\subsection{Why are new policies needed?}
+
 
 \mypara{Message scheduling}
+Scheduling of messages~\cite{??} and jobs~\cite{??} in queues is pervasively used in the web backend. 
+For instance, a message broker is a typical queuing system that provides subscriber/publisher services between two subsystems (\eg web servers and database stores). 
+
 % - fifo and etc don't work
-To show the need of a new policy for QoE-driven  scheduling, we consider a simple example (shown in Figure~\ref{??} ) in which there are three identical requests (\ie they are of the same priority) in the queue but they have different non-queuing delays.
+\begin{wrapfigure}{r}{0.48\linewidth}
+	\centering
+	\includegraphics[width=1.0\textwidth]{figs/scheduling.pdf}
+	\caption{The outcomes of different scheduling policies (right) applied on the three requests with different positions on the QoE curve (left).}
+	\label{fig:scheduling}
+\end{wrapfigure}
+Figure~\ref{fig:scheduling} illustrates the need for a new policy for QoE-driven scheduling. 
+We consider three requests in a queue, which are identical except their non-queuing delays (shown on the left-hand side of Figure~\ref{fig:scheduling}).
 We compare three policies: 
 (1) FIFO, which is the default policy for equal-priority requests.
-(2) Earliest-Deadline-First (EDF), which uses a fixed deadline on the sum of queuing delay and non-queuing delay and prioritizes requests whose non-queuing delay is closest to the deadline, and 
-(3) the optimal scheduling policy (OPT) that maximizes average QoE.
-We assume that the page load time of a request is the sum of the non-queuing delay and the queuing delay (that is, the number of jobs ahead of it times the per-request processing delay).
-Figure~\ref{??}  shows the outcome of running each policy. 
-We can see that OPT outperforms FIFO, because it is agnostic to non-queuing delay
-OPT also outperforms EDF with various deadlines, even though it somehow takes the non-queuing delay into account (by imposing a deadline on the total of queuing and non-queuing delay).
-This is because how close a request's non-queuing delay is to the deadline is {\em still} agnostic to the sensitivity of QoE to the queuing delay. 
-Remember in Figure~\ref{??}, the QoE sensitivity does not grow monotonically to the non-backenc(queuing) delay. 
+(2) Earliest-Deadline-First (EDF), which give the requests with longer non-queuing delay higher priority (\ie closer to the deadline), and 
+(3) the optimal scheduling policy (Optimal) that maximizes average QoE.
+Here, the end-to-end of a request is the sum of the backend delay (\ie the number of jobs ahead of it times the per-request processing delay) and the non-backend delay.
+Figure~\ref{fig:scheduling}  shows the outcome of running each policy. 
+Because FIFO and EDF are agnostic to the sensitivity of QoE (\ie the slope of each request on the QoE curve), they are not aware that the most sensitive request is the red one.
+In contrast, the Optimal policy is able to identify and prioritize the red request one over the others.
+%OPT also outperforms EDF with various deadlines, even though it somehow takes the non-queuing delay into account (by imposing a deadline on the total of queuing and non-queuing delay).
+%This is because how close a request's non-queuing delay is to the deadline is {\em still} agnostic to the sensitivity of QoE to the queuing delay. 
+%Remember in Figure~\ref{fig:qoe-curve}, the QoE sensitivity does not grow monotonically to the non-backenc(queuing) delay. 
 
 \mypara{Web server replica selection}
 % - example of tails
-Large-scale distributed systems are susceptible to {\em performance outliers} on some replicas---\eg exceptionally long processing time on some requests due to CPU contention, software garbege collection, etc. 
-Despite much effort devoted to eliminate performance outliers, they are still prevalent, resulting in bad tail (\eg 99$^\textrm{th}$ percentile) performance even if the mean/median performance is good.
-Our first idea is that rather than cutting the performance outliers, we show that QoE-aware replica selection algorithm can {\em contain} the negative impact of performance outliers on user-perceived QoE.
+Large-scale distributed systems are susceptible to {\em performance outliers}.
+% on some replicas---\eg exceptionally long processing time on some requests due to CPU contention, software garbege collection, etc. 
+Despite much effort to eliminate performance outliers, they are still prevalent, resulting in bad tail (\eg 99$^\textrm{th}$ percentile) performance even if the mean/median performance is good.
+%Our first idea is that rather than cutting the performance outliers, we show that QoE-aware replica selection algorithm can {\em contain} the negative impact of performance outliers on user-perceived QoE.
 
-Consider a system with two replicas, as in Figure~\ref{??}. 
-Both replicas have the same load-performance profile that as load (number of requests received per second) goes up, the 99$^\textrm{th}$ percentile delay increases sharply, though the mean performance has only mild increase. 
+
+\begin{wrapfigure}{r}{0.5\linewidth}
+	\centering
+	\includegraphics[width=1\textwidth]{figs/replica.pdf}
+	\caption{A simple example showing the outcomes of different replica selection policies.}
+	\label{fig:replica}
+\end{wrapfigure}
+%Consider a system with two replicas, as in Figure~\ref{??}. 
+Figure~\ref{fig:replica} illustrates an example where a QoE-driven replica selection policy can contain the negative impact of performance outliers on user-perceived QoE, but a traditional load-balancing policy is not able to do so.
+Both replicas have the same load-performance profile: as load (number of requests received per second) goes up, the 99$^\textrm{th}$ percentile delay increases sharply. We assume that the mean delay remains the same. 
 This illustrative setting is simplified but in consistent with the load-performance profile in real datacenters~\cite{??}.
-Suppose that the workload is \fillme requests per second, that the requests have same QoE-delay curve, and their non-backend delays follow the distribution show in the figure.
-We compare two traditional replica selection policies---load balancing policy that strives to put even load, latency-aware policy~\cite{c3,cassandra,etc} that optimizes for Eq.~\ref{eq:old}---with an optimal policy that optimizes for Eq.~\ref{eq:new}.
-We see that the optimal solution achieves better tail QoE than both baselines. 
+Suppose that the workload is 1200 requests per second, that the requests have same QoE curve, and their non-backend delays follow the distribution show in the figure.
+We compare two traditional replica selection policies---a randomized policy that strives to put even load, a latency-aware policy~\cite{c3,cassandra,etc} that optimizes for Eq.~\ref{eq:old}---with a QoE-driven policy that optimizes for Eq.~\ref{eq:new}.
+The optimal solution achieves better tail QoE than both baselines. 
 Both load balancing policy and latency-aware put even load to the replicas, which make both equally overloaded, causing long tail delay and bad tail QoE.
 In contrast, the optimal policy diliberately puts more requests on one than another, but does so by letting QoE-sensitive requests use the lighter-loaded replica and letting QoE-insensitive requests use the slightly more loaded replica. 
 
+In short, we see that, in both scheduling and replica selection, traditional QoE-agnostic policies are fundamentally unable to achieve the same performance as optimal QoE-driven policies. However, implementing an optimal  QoE-driven policy in practice is challenging.
+
 \subsection{Why challenging?}
-The new QoE-aware scheduling policy should be {\em near-optimal} (\ie achieve QoE close to the optimal scheduling outcomes) and {\em efficient} (\ie constant decision time on each incoming request).
-To see why it is challenging to meet both requirements simultaneously, let us consider two baselines.
-On one hand, standard approximating\footnote{Unfortunately, optimzing a non-contex curve objective function, as in our case, requires running complex algorithms, whose runtime increases super-linearly with the number of variables~\cite{??}.} algorithms (\eg~\cite{??}) often requires non-constant overhead to compute the scheduling order of each request. 
+
+In general, a QoE driven policy should meet two requirements: {\em near-optimal} (\ie achieve QoE close to the optimal scheduling outcomes) and {\em efficient} (\ie constant decision time on each incoming request).
+To see why meeting both requirements is challenging, let us take scheduling as an example and consider two baselines.
+%The new QoE-aware scheduling policy should be {\em near optimal} (\ie achieve QoE close to the optimal scheduling outcomes) and {\em efficient} (\ie constant decision time on each incoming request).
+%To see why it is challenging to meet both requirements simultaneously, let us consider two baselines.
+
+On one hand, our problem is non-convex (Eq.~\ref{eq:new}), so standard approximating\footnote{Unfortunately, optimizing a non-convex curve objective function, as in our case, requires running complex algorithms, whose runtime increases super-linearly with the number of variables~\cite{??}.} algorithms (\eg~\cite{??}) often requires non-constant overhead to compute the scheduling order of each request. 
 On the other hand, fast scheduling algorithms can be suboptimal. 
 For instance, one efficient scheduling algorithm is to give each request a priority that is proportional to the {\em slope} of its non-queuing delay on the QoE-delay curve. 
 This makes sense, because if the request were to stay in the queue for a (short) fixed amount of queuing delay, this slop indicates exactly how much QoE degradation will be caused by the queuing delay, and the decision runtime is constant for each request.
 However, the queuing delay does vary among requests as well as over time (as it might be pre-emptived by future requests), and the resulting QoE might suffer.
-If the queuing delay is non-trivial, the slope of a request's non-queuing delay can be both an overestimate or underestimate of the acutal QoE sensitivity of a request. 
+If the queuing delay is non-trivial, the slope of a request's non-queuing delay can be both an overestimate or underestimate of the actual QoE sensitivity of a request. 
 In Figure~\ref{??}, for instance, if the queuing delay is 200ms, a request with 1100ms non-queuing delay will be believed as insensitive to the queuing delay, while after 200ms queuing, it actually will see significant drop in QoE. 
 
 Moreover, the new scheduling policy has to be {\em amenable} to the implementation of existing message brokers. 
-For instance, in RabbitMQ, once a request is pushed to a FIFO queue associated with some priority, and cannot be easily changed to another FIFO queue. 
+Take RabbitMQ as a canonical example. 
+Logically, it maintains a number (at most 255) of queues, the queues have different priorities, and within each queue, the messages, or requests in our contenxt, are scheduled using simple First-In-First-Out policy (FIFO) policy.
+So once a request is pushed to a FIFO queue associated with some priority, and cannot be easily changed to another FIFO queue. 
 That means, the related ordering of two requests cannot be changed once they are scheduled.
 For instance, the aforementioned slope-based scheduling algorithm cannot be easily fixed by re-assigning a priority that reflects the slope after the amount of queuing delay.
 (Note this does not preclude the possibility of preemption by a future request if we assign it with a high priority.)
 
-\jc{cross subsystem optimization}
+
+%Here, the backend delay means the queuing delay (amount of time a request stay in the queue), and the non-backend delay means any delay that is not caused by queuing.
+
+%\jc{cross subsystem optimization}
 
 \subsection{Proposed research}
-We propose to develop new scheduling policies that leverage the heterogeneity of QoE sensitivity across requests to improve user-perceived QoE. 
-One potential idea is to rely on the fact that the number of requests and the distribution of their non-queuing delay is relatively stable at a timescale of several seconds. 
-Thus, we can periodically recalculate the priority of a request with certain non-queuing delay by assuming that future requests will be drawn from certain distribution.
-Then, the scheduling problem can save this mapping in a table, and determine the priority of any new request by looking-up the table. 
 
+We propose to develop new scheduling and replica selection policies that leverage the heterogeneity of QoE sensitivity across requests to improve user-perceived QoE while saving resources. 
+One potential idea is to rely on the fact that the number of requests and the distribution of their non-backend delay is relatively stable at a timescale of several seconds, so we can {\em predict} the workload for the next few seconds.
+Thus, we can periodically recalculate the scheduling (or replica selection) decision for requests of any non-backend delay by assuming that future requests will be drawn from the predicted distribution.
+We save this mapping in a look-up table, and when a new request arrives, we can determine the scheduling priority or selected replica for the new request by looking up the table.
+
+Finally, as an extension of making individual subsystems QoE-driven, we will also examine possibilities of joint optimization across subsystems. The problem will become more challenging and will call for more complex solutions, but we believe the insights (\eg persistent workload) from single subsystem control policy may apply to a cross-subsystem setting.
+
+%\jc{cross subsystem optimization}
 
 
 
@@ -344,25 +379,28 @@ In fact, the tracing infrastructure, similar to what is needed for the tracing-b
 \mypara{Proposed research}
 %- Cross-subsystem tracing and predicting non-backend delay
 While both approaches sound promising, we found that they may not meet the requirement of estimating QoE sensitivity of requests in real-time. 
-These tracing systems and QoE recording systems are mainly built for {\em offline} diagnosis, rather than online inference. As a result, these timestamps are often recorded by individual subsytems in a distributed fashion, but only collected to a central place that can be queried every several minutes or even hours. 
+These tracing systems and QoE recording systems are mainly built for {\em offline} diagnosis, rather than online inference. As a result, these timestamps are often recorded by individual subsystems in a distributed fashion, but only collected to a central place that can be queried every several minutes or even hours. 
 To address this problem requires a better solution. 
-One possibility is to make these tracing information (\eg timestamps of the past events of a request) ``in-band'' as part of the request itself. This may require changes in the message format or client-facing interfaces, but will make these tracing information instantly available when the backend recives the request.
+One possibility is to make these tracing information (\eg timestamps of the past events of a request) ``in-band'' as part of the request itself. This may require changes in the message format or client-facing interfaces, but will make these tracing information instantly available when the backend receives the request.
 
 \subsection{How should fairness be defined?}
 \begin{task}
 We will investigate the ``price of fairness'', \ie loss in QoE in exchange for more fairness, and how to define fairness that is robust to actions of other systems.
 \end{task}
 
-One evident downside of QoE-driven control policies is the seemingly unfair treatment of priorizing requests with higher QoE sensitivity over others, even though these requests are of the same nature (same application, same content, etc).
+One evident downside of the proposed QoE-driven control policies is the seemingly unfair treatment of prioritizing requests with higher QoE sensitivity over others, even though these requests are of the same nature (same application, same content, etc).
+So net neutrality~\cite{??} should be properly addressed.
 
 \mypara{This might be fair after all}
 At first glance, giving more resources to one request than another, just because one request spends less (or more) time over the WAN, does not seem fair.
-However, if we take the ``utility'' of these resource into account, such behavior could be viewed as perfectly fair under some circumtances.
+However, if we take the ``utility'' of these resource into account, such behavior could be viewed as perfectly fair under some circumstances.
 More specifically, from the perspective a client, what matters is not how much resource her request is being process with; what matters is how much {\em QoE degradation} a particular resource allocation causes.
 To use the  terminology  introduced in \S\ref{subsec:framework}, we can define fairness based on standard fairness index (\eg Jain's index~\cite{??}) over the QoE degradation, \ie $Q\left(t_{r}^{(nonbackend)}\right)-Q\left(t_{r}^{(nonbackend)}+t_{r}^{(backend)}\right)$, among requests $r\in R$.
 More importantly, achieving this notion fairness can be directly incorporate in the solving the Eq.~\ref{eq:new} as a constraint.
 
-\jc{user-level fairness?}
+%\jc{user-level fairness?}
+%Another 
+
 %To use the terminology used in \S\ref{subsec:framework}, we can define a max-min fairness as
 %\begin{align}
 %& \min\max_{r\in R}Q(t_{r}^{(nb)})-Q(t_{r}^{(nb)}+t_{r}^{(b)}) \label{eq:fairness}
@@ -390,15 +428,50 @@ In the meantime, we notice that by being QoE-agnostic, traditional web backends 
 Finally, we will investigate how fairness should be defined so that we can avoid being negatively affected by other systems diliberately misleading our backend into treating requests unfairly. One potential solution is to monitor the delay of non-backend systems (\eg ISPs) of history requests in order to detect whether they add artificially add more delays; when they do, the backend then should stop inferring the requests' sensitivity by their actual non-backend delay; and instead assume the non-backend delay is at the normal level.
 
 
-\section{Related Efforts}
-Some earlier work also takes non-backend delay into account when optimizing cloud-based applications. 
+\section{Putting It into Perspective}
+Here we contrast our proposal to three categories of closely related prior work.
+
+\mypara{Improving web service quality-latency tradeoffs}
+We are not the first to observe that the impact of web backend varies across users~\cite{??,??}. 
 Timecard~\cite{timecard} allows requests that have shorter network delay to wait longer for the web server to retrieve better ad content. 
 DQBarge~\cite{dqbarge} similarly trades delay for better response quality by monitoring the progress of parallel subtasks and allowing faster subtasks to process longer to get better results without increasing the total response time.
 Also relevant are works that dynamically predict the response-time service-level agreement of cloud applications~\cite{Rich Wolski}, which are driven by the same need to cope with the heterogeneity of non-backend delay across users and over time.
-Our previous work EONA~\cite{eona} pioneers the idea of driving individual systems of the application ecosystem (including web service backend) by user-perceived QoE.
-\jc{Difference to application-system joint optimization (\eg coflow)?}
+Closest to the proposal is our previous work EONA~\cite{eona} which pioneers the idea of driving individual systems of the application ecosystem (including web service backend) by user-perceived QoE.
 However, none of these works show the benefits of QoE-awareness through the lens of resource/QoE tradeoffs. 
 
-\jc{diff to QoE management. see wiki page.}
+\mypara{Application-aware cloud scheduling}
+Jointly optimizing application-level objectives with network- or system-level mechanisms is a well-studied topic. 
+For instance, Coflow and its variants~\cite{??,??,??} shows that by grouping network flows that are previously treated independently, application-aware network scheduling can significantly improve the cloud application performance.
+However, these works assume the applications run within the scope of cloud, so they do not take into account the heterogeneous impact non-cloud factors have on application performance.
 
+\mypara{Video QoE-aware network management}
+It is well-known that user-perceived QoE is different from system-level quality of service (QoS) metrics. 
+The most relevant works based on this insight are those that manage network resources to maintain video QoE at desirable level~\cite{??,??,??}. 
+For instance, a QoE-aware network controller uses estimate user-perceived video QoE~\cite{??} to improve the video streaming via traffic shaping~\cite{??} so that minimal storage and network resources are allocated to maintain a specific level of user satisfaction.
+However, these works do not consider that some users may be bottlenecked by other systems (other ISPs, CDNs, or home network), and thus fail to take into account both users whose QoE might be made desirable by more network resources as well as users whose QoE requirement cannot be met.
 
+%Some earlier work also takes non-backend delay into account when optimizing cloud-based applications. 
+%Timecard~\cite{timecard} allows requests that have shorter network delay to wait longer for the web server to retrieve better ad content. 
+%DQBarge~\cite{dqbarge} similarly trades delay for better response quality by monitoring the progress of parallel subtasks and allowing faster subtasks to process longer to get better results without increasing the total response time.
+%Also relevant are works that dynamically predict the response-time service-level agreement of cloud applications~\cite{Rich Wolski}, which are driven by the same need to cope with the heterogeneity of non-backend delay across users and over time.
+%Our previous work EONA~\cite{eona} pioneers the idea of driving individual systems of the application ecosystem (including web service backend) by user-perceived QoE.
+%\jc{Difference to application-system joint optimization (\eg coflow)?}
+%However, none of these works show the benefits of QoE-awareness through the lens of resource/QoE tradeoffs. 
+
+%\jc{diff to QoE management. see wiki page.}
+
+\section{Project Management Plan}
+This project will be carried out by the PI and two Ph.D. students over a 2-year period, with the timeline
+shown below (R=research, B=System building, U=user study deployment and data collection, E=evaluation).
+
+\begin{table}[h]
+\footnotesize
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|}
+\hline
+Research tasks                           & Y1Q1 & Y1Q2 & Y1Q3 & Y1Q4 & Y2Q1 & Y2Q2 & Y2Q3 & Y2Q4 \\ \hline
+Task 1: Quantifying potential benefits   & U    & U/R  & U/R  & U/R  &      &      &      &      \\ 
+Task 2: QoE-driven control algorithms    & R    & R/B  & R/B  & R/B  & B/E  & E    &      &      \\ 
+Task 3: QoE-driven backend architecture &      & R    & R/B  & R/B  & B    & B    & E    & E    \\ 
+Task 4: Impact on QoE fairness           &      &      & U/R  & U/R  & R    & R    & E    & E    \\ \hline
+\end{tabular}
+\end{table}
