@@ -171,7 +171,8 @@
 % \end{center}
 
 \begin{center}
-{\bf\Large CRII: NeTS: Unleashing the Potential of QoE-Driven Web Backend} \\
+%{\bf\Large CRII: NeTS: Unleashing the Potential of QoE-Driven Web Backend} \\
+{\bf\Large CRII: NeTS: A User Heterogeneity-Aware Approach \\to Web QoE Optimization} \\
 \smallskip
 \end{center}
 
@@ -193,10 +194,6 @@
 %%  \newpage
 %\tableofcontents
 %\newpage
-
-\pagenumbering{arabic}
-\renewcommand{\thepage} {D--\arabic{page}}
-
 
 %% The Project Description should provide a clear statement of the work to be undertaken and must include:
 %% objectives for the period of the proposed work and expected significance; relation to longer-term goals of the PI's
@@ -235,14 +232,25 @@
 
 %\newpage
 \vspace{-0.2cm}
+%\mypara{Summary}
+%The Internet ecosystem is critically driven by user-perceived {\em quality of experience} ({\em QoE}). 
+%Yet, despite tremendous efforts, many users still suffer from suboptimal QoE. 
+%%We argue that 
+%A fundamental reason is that many Internet systems (\eg web backends, CDNs, and ISPs) are unaware of their impact on individual user's QoE; instead, each system optimizes its own low-level metric,
+%% (\eg minimizing the delay caused by the individual system), 
+% rather than directly optimizing QoE.
+%In contrast, our overarching argument is that one can substantially improve QoE and resource efficiency by using real-time per-user QoE information to directly drive the optimization of these subsystems.
+
 \mypara{Summary}
-The Internet ecosystem is critically driven by user-perceived {\em QoE} (quality of experience). 
-Yet, despite tremendous efforts, many users still suffer from suboptimal QoE. 
-We argue that a fundamental reason is that many Internet systems (\eg web backends, CDNs, and ISPs) are unaware of their impact on individual user's QoE; instead, the conventional wisdom is that each system should optimize its own low-level metric,
+The Internet ecosystem is critically driven by user-perceived {\em quality of experience} ({\em QoE}). 
+Yet, many users still suffer from suboptimal QoE, despite tremendous efforts to add more resources to scale-up these Internet services.
+We argue that the existing resources are already sufficient to provide much better QoE. 
+The key missing piece is that many Internet systems (\eg web backends, CDNs, and ISPs) today are unaware of their and other systems' impact on the QoE perceived by individual users; instead, they focus on optimizing low-level performance metrics.
+Our overarching thesis is that one can substantially improve QoE and resource efficiency by using user-perceived QoE to directly drive these systems.
+%A fundamental reason is that many Internet systems (\eg web backends, CDNs, and ISPs) are unaware of their impact on individual user's QoE; instead, each system optimizes its own low-level metric,
 % (\eg minimizing the delay caused by the individual system), 
- rather than directly optimizing QoE.
-In contrast, our overarching thesis is that one can substantially improve QoE and resource efficiency by using real-time per-user QoE information to directly drive the optimization of these subsystems.
-We also observe a confluence of favorable recent trends that can lead the proposed research to real-world impact, including the prevalence of QoE-driven revenue models, and the wide use of tracing between clients and the backend.
+% rather than directly optimizing QoE.
+%In contrast, our overarching argument is that one can substantially improve QoE and resource efficiency by using real-time per-user QoE information to directly drive the optimization of these subsystems.
 
 This proposal explores the opportunities and challenges of this proposed thesis in the context of web backend systems optimizing web QoE. 
 In particular, we introduce a new dimension for optimizing web QoE: the {\em inherent heterogeneity} of how much impact the {\em web backend delay} has on QoE across web requests. 
@@ -251,6 +259,7 @@ For instance, a small amount of backend delay can have a much greater impact on 
 %However, our intuition is that a small amount of backend delay {\em does} have a much greater impact on the QoE of a web request that has spent only 50ms on wide-area networks than on the QoE of another request that has spent over 800ms on the network.
 Unlike today's web backend which seeks to equally minimize the backend delay for each web request, we propose {\em QoE-driven web backend}, which embraces 
 such heterogeneity of QoE's sensitivity to backend delay---web requests previously seen as indistinguishable by the backend system can now be treated differently so as to improve QoE by favoring the requests whose QoE is more sensitive to backend delay without hurting other requests' QoE or adding new resources.
+We also observe a confluence of favorable recent trends that can lead the proposed research to real-world impact, including the prevalence of QoE-driven revenue models, and the wide use of tracing between clients and the backend.
 % has profound implications
 We focus on answering three questions: 
 %(1) Quantifying the potential improvement of a QoE-driven web backend system in the wild;
@@ -279,7 +288,11 @@ The PI has, and will continue to, participate and organize many activities that 
 
 \newpage
 
-\tableofcontents
+
+\pagenumbering{arabic}
+\renewcommand{\thepage} {D--\arabic{page}}
+
+%\tableofcontents
 
 \newpage
 
