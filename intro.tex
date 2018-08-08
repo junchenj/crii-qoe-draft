@@ -2,7 +2,7 @@
 
 \section{Introduction}
 
-\noindent A key challenge facing Internet services today is how to share resources across users to maximize the user-perceived {\em QoE} (Quality of Experience) by minimizing their end-to-end delay.
+\noindent A key challenge facing Internet services today is how to share resources across users to maximize the user-perceived {\em QoE} (Quality of Experience). % by minimizing the end-to-end delay (page loading time).
 Maintaining a desirable level of user-perceived QoE is critical because reducing a few hundred milliseconds from the page load time means millions of dollars.
 %The fundamental challenge facing large-scale web service providers and (\eg Microsoft, Facebook, Akamai, Google, Amazon) is how the backend systems should share its resources in order to optimize user-perceived {\em QoE} (Quality of Experience). 
 %Maintaining desirable level of user-perceived QoE critical for their revenue models.
@@ -12,10 +12,10 @@ Yet, despite substantial efforts (\eg~\cite{shandian,gaze,rosen2017push,jalapart
 
 We argue that the key missing piece of today's Internet architecture is that individual Internet systems, \eg web backends, CDNs, and ISPs, are oblivious to their impact on individual users' real-time QoE, especially when the impacts vary across users.
 As a consequence, it is difficult for these systems to directly optimize QoE. 
-Instead, our overarching thesis is that these systems should be driven directly by the real-time information about their impact on the QoE across users, which could substantially improve QoE as well as resource efficiency, without adding new resources.
-While there have been similar efforts in the past (\eg~\cite{alto,frank2013pushing,xie2008p4p,jiang2009cooperative}) toward similar end-to-end and cross-layer optimization, our project is inspired by several favorable recent trends, including ``use-case pulls'', such as the prevalence of QoE-driven revenue models (\eg~\cite{akamai-report,dobrian2011understanding}), as well as ``technological pushes'', such as the wide use of tracing from the clients and the backend systems (\eg~\cite{mystery,zhao2014lprof}). 
+Instead, our overarching thesis is that these systems should be driven directly by the real-time information about their impact on the QoE across users. This can substantially improve QoE as well as resource efficiency, without adding new resources.
+While there have been similar efforts in the past (\eg~\cite{alto,frank2013pushing,xie2008p4p,jiang2009cooperative}) toward similar end-to-end and cross-layer optimization, our project is inspired by several favorable recent trends, including ``use-case pulls'', such as the prevalence of QoE-driven revenue models (\eg~\cite{akamai-report,dobrian2011understanding}), as well as ``technological pushes'', such as the wide use of tracing from the clients and the backend systems (\eg~\cite{mystery,zhao2014lprof,odin}). 
 
-This proposal explores the benefits and challenges of our thesis in the context of how web backend systems should optimize web QoE by leveraging user heterogeneity. 
+This proposal explores the benefits and challenges of this general approach in a specific context: everaging the user heterogeneity for building better QoE web service backend systems.
 
 \mypara{Limitation of today's web backend}
 %The web backend systems today have no direct visibility of the QoE of each web request when it arrives, 
@@ -44,13 +44,13 @@ Our answer is {\em no}, and such heterogeneous sensitivity of QoE to backend del
 This is due to the fact that how much impact the backend delay has on a request depends on the non-backend delay experienced by a request (\eg ISP routing, client-side resource allocation by the device OS), which can have great variability among requests and over time~\cite{timecard,dqbarge}.
 %Two observations contribute to this conclusion: the non-linear relationship between page load time and QoE~\cite{??} and the fact that the WAN/client delay varies among requests~\cite{timecard,dqbarge}, {\em the QoE sensitivity to backend delay varies among requests.}
 For instance, the QoE of a web request that has spent 50ms on wide-area networks tends to be more sensitive to 10ms backend delay than a request that has already spent 500ms on the network.
-By falsely assuming requests are equally sensitive to the backend delay, traditional web backend system (Figure~\ref{fig:intro-overview}(a)) might waste resources on requests that are insensitive to the backend delay, and/or have suboptimal QoE (\eg using inadequate resources on requests whose QoE is critically dependent on the backend delay. 
+By falsely assuming requests are equally sensitive to the backend delay, traditional web backend system (Figure~\ref{fig:intro-overview}(a)) might waste resources on requests that are insensitive to the backend delay, and/or have suboptimal QoE (\eg using inadequate resources on requests whose QoE is critically dependent on the backend delay). 
 
 \mypara{Our approach} 
 We introduce ``QoE sensitivity'' as a new dimension for web QoE optimization, and propose to develop {\bf QoE-driven web backend} systems (Figure~\ref{fig:intro-overview}(b)). 
-We argue that embracing the heterogeneity in QoE's sensitivity to backend delay has profound implications for backend systems: 
-it should allocate resources in a way that favors the requests whose QoE is more sensitive to backend delay to improve the overall QoE while having only a minimal drop in the QoE of other requests.
-For instance, in a trace-driven simulation (\S\ref{sec:quantifying}), we found that a simple QoE-driven resource allocation policy can raise user experience (measured in user engagement) 50\% closer to optimal (\ie zero backend delay) than a QoE-agnostic reference web backend.
+We argue that embracing the user heterogeneity in their sensitivity to backend delay has profound implications for backend systems.
+The backend should allocate resources in a way that slightly prioritizes the requests whose QoE is more sensitive to backend delay while having only a minimal drop in the QoE of other requests.
+For instance, in a trace-driven simulation (\S\ref{sec:quantifying}), we found that a QoE-driven resource allocation policy can raise user experience (measured in user engagement) over 30\% closer to optimal (\ie zero backend delay) than a QoE-agnostic reference web backend.
 %should allocate their limited resources. 
 %By taking into account the QoE's sensitivity to the backend delay, 
 %\jc{bring up some concrete improvement numbers}
@@ -74,27 +74,29 @@ For instance, in a trace-driven simulation (\S\ref{sec:quantifying}), we found t
 %The key difference is that 
 %Unlike a traditional backend which seeks to minimize the backend delays, a QoE-driven backend seeks to minimize the impact of backend delays on user-perceived QoE.
 
-Despite its promise, we face two key challenges.
-First, when a request is received, the backend needs to estimate in real time the sensitivity of the request's QoE to the backend delay with sufficient accuracy, and propagate the information across individual components of the backend. This information is not readily available in today's backend.
+Despite the promise, we face two key challenges.
+First, when a request is received, the backend needs to estimate in real time the sensitivity of the request's QoE to the backend delay with sufficient accuracy, and propagate the information across individual components of the backend. This information is not directly available in today's backend systems.
 Second, the resource allocation and scheduling logic of web backend subsystems need to be updated to leverage the heterogeneity across users. The challenge arises from the fact that requests need to be set with different priorities in real time depending on their non-backend delay.
-There are other problem inherent to the QoE-driven approach, including control stability (\ie the backend system becomes sensitive to any changes in non-backend delay), and exacerbating QoE unfairness (\ie the backend system favors sensitive users who may already have better QoE than some others).
+There are other problems inherent to the QoE-driven approach, including control stability (\ie the backend system becomes sensitive to any changes in non-backend delay), and exacerbating QoE unfairness (\ie the backend system favors sensitive users who may already have better QoE than some others).
 %Through developing novel algorithms and architectural components, we show that a {\bf QoE-driven web backend} (Figure~\ref{fig:intro-overview}(b)), which is aware of and embraces the differences of QoE sensitivity across requests, can substantially {\em improve the resource/QoE tradeoffs} of web backend; \ie better QoE without using more resources, or saving resources without degrading QoE. 
 % Note that being QoE sensitivity does not require expensive infrastructure changes (\eg adding hardware or changing software stack).
 
 \mypara{Research plan}
-We will explores the problem space by focusing on addressing the first two challenges, and will also discuss other questions (\eg control instability and unfairness).
+We will explore the problem space by focusing on addressing the first two challenges, and will also discuss other questions (\eg control instability and unfairness).
 We divide the proposed research into three main tasks. 
 %We use the following roadmap to thoroughly examine the benefits and challenges of QoE-sensitivity-aware web service backend.
 
 \begin{packedenumerate}
 \item{\bf Quantifying potential benefits (Task \#1).}
-We will use a mix of user studies and analysis of industry datasets to quantify the potential improvement (in terms of QoE and resource savings) brought by the QoE-driven web backend in real-world workloads and identify the opportunities of QoE-driven optimizations in existing web backend systems.%, and use measurement dataset from large-scale web services to understand its potential in the real-world traffic patterns.
+We will use a mix of user studies and analysis of industry datasets to quantify the potential improvement (in terms of QoE and resource savings) of a QoE-driven web backend in real-world workloads. %identify the opportunities of QoE-driven optimizations in existing web backend systems.%, and use measurement dataset from large-scale web services to understand its potential in the real-world traffic patterns.
 
 \item{\bf Estimating backend's impact on per-request QoE in real time (Task \#2).}
-We will develop new tracing infrastructure and QoE prediction models to estimate the impact of backend delay on requests' QoE in real time. We will investigate the possibilities of incremental deployment by reusing the existing tracing and telemetry infrastructure in today's web backend systems.
+We will develop new tracing infrastructure and QoE prediction models to estimate the impact of the backend delay on the QoE of individual requests in real time. We will investigate
+%the possibilities of 
+incremental deployment by reusing the existing tracing and telemetry infrastructure in today's backend systems.
 
 \item{\bf Designing QoE-driven control algorithms (Task \#3).}
-We will develop novel control policies for web backend, including scheduling, and replica selection, to leverage the user heterogeneity. Our design objectives are: (1) it should achieve near-optimal QoE with minimal decision-making overhead, and (2) the implementation should be amenable to existing systems.
+We will develop novel control policies for web backend, including scheduling and replica selection, to leverage the user heterogeneity. Our design objectives are: (1) it should achieve near-optimal QoE with minimal decision-making overhead, and (2) the implementation should be amenable to existing systems.
 
 \end{packedenumerate}
 
@@ -111,7 +113,7 @@ He has extensive collaborations with Microsoft, Conviva, and Google, which will 
 
 \mypara{Prior NSF support} The PI has had no prior NSF support.
 
-This project will provide preliminary results on potentials and feasibility of a QoE-driven web backend, which will allow us to further apply similar approach to other Internet systems. This is part of the necessary steps for the PI to achieve research independence.
+This project will provide preliminary results on potentials and feasibility of a QoE-driven web backend, which will allow us to further apply similar approaches to other Internet systems. This is part of the necessary steps for the PI to achieve research independence.
 
 %\newpage
 
