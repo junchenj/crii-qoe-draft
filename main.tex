@@ -174,7 +174,7 @@
 %{\bf\Large CRII: NeTS: Unleashing the Potential of QoE-Driven Web Backend} \\
 % {\bf\Large CRII: NeTS: A User Heterogeneity-Aware Approach \\to Web QoE Optimization} \\
 % {\bf\Large CRII: NeTS: Leveraging User Heterogeneity for Building Better QoE Systems}\\
-{\bf\Large CRII: NeTS: Leveraging User Heterogeneity for Better QoE Systems} \\
+{\bf\Large CRII: NeTS: Leveraging User Heterogeneity for Building Better \\Systems to Improve Quality of Experience} \\
 \smallskip
 \end{center}
 
@@ -257,13 +257,13 @@ Our overarching thesis is that instead of adding more resources, using {\em indi
 
 This proposal explores the opportunities and challenges of this general approach in a specific context: leveraging the user heterogeneity for building better QoE web service backend systems.
 We observe {\em inherent heterogeneity} of how much impact the delay of web backend has on the QoE across web requests.
-For instance, a small amount of backend delay can have a far greater impact on the QoE of a web request that has spent only 50ms on wide-area networks than on the QoE of another request that has spent over 800ms on the network.
+For instance, a backend processing delay of 50ms can have a far greater impact on the QoE of a web request that has spent only 50ms on wide-area networks than on the QoE of another request that has spent over 800ms on the network.
 We propose {\em QoE-driven web backend}.
-Unlike today's web backend which seeks to equally minimize the backend delay for each web request, a QoE-driven backend embraces the user heterogeneity---web requests previously seen as indistinguishable by the backend system can now be treated in a way that favors the requests whose QoE is more sensitive to backend delay with negligible drop in other requests' QoE and no additional resources.
+Unlike today's web backend which seeks to equally minimize the backend delay for every web request, we envision a QoE-driven backend embraces the user heterogeneity---web requests previously seen as indistinguishable by the backend system can now be treated in a way that slightly prioritize the requests whose QoE is more sensitive to backend delay with negligible drop in other requests' QoE and no additional resources.
 We also observe a confluence of favorable recent trends that can lead the proposed research to real-world impact, including the prevalence of QoE-driven revenue models, and the wide use of tracing between clients and the backend.
-We focus on addressing two key challenges.
-First, our approach requires real-time information on the sensitivity of any request's QoE with respect to the backend delay, which is not readily available in today's backend systems.
-Second, the backend resource allocation and scheduling mechanisms need to be updated to utilize the user heterogeneity. This resembles deadline-driven scheduling but with the backend deadline set dynamically for each request based on its external non-backend delay.
+We focus on two key challenges.
+First, our approach requires real-time information on the sensitivity of individual request's QoE with respect to the backend delay, which is not directly available in today's backend systems.
+Second, the backend resource allocation and scheduling mechanisms need to be updated to utilize the user heterogeneity. What is new compared to traditional resource allocation schemes is that request's priority needs to be set dynamically for each request based on its external non-backend delay.
 % (1) How much potential benefit does a QoE-driven web backend have in the wild?
 % (2) How to obtain the sensitivity of QoE with respect to the backend processing delay in real time?
 % (3) How should web backend resource be allocated to utilize the heterogeneous impact of backend delay on QoE?
@@ -291,15 +291,16 @@ As part of the proposed research, we will also explore other questions (\eg cont
 \mypara{Intellectual merit}
 % We propose to elevate {\em the sensitivity of QoE to backend delay} as a key factor in the control logic of web backend systems.
 The proposed research will build novel QoE-driven web services along three thrusts:
-(1) Quantifying the potential improvement of QoE by leveraging the user heterogeneity in the wild;
-(2) Developing tracing and prediction techniques to estimate QoE sensitivity to the backend delay in real time; and
-(3) Developing QoE-driven control logic for resource allocation and scheduling in web backend systems.
+(1) Quantifying the potential improvement of QoE by leveraging the user heterogeneity;
+(2) Developing tracing and prediction techniques to estimate in real time the impact of the backend delay on a request's QoE; and
+(3) Developing QoE-driven resource allocation and scheduling for web backend systems.
 %4. Exploring the possibilities of QoE-driven optimization negatively affecting fairness.
-The key insight is a fundamentally new approach to QoE optimization over the federated Internet architecture, which argues that individual systems should not be treated in isolation; instead, they should be made aware of the opportunities naturally inherent in the fact that end-users are affected by multiple systems.
+The project can potentially provide a new approach to QoE optimization over the federated Internet architecture---individual systems should leverage the opportunities naturally inherent in the fact that end-users are affected by multiple systems.
+% The key insight is a fundamentally new approach to QoE optimization over the federated Internet architecture, which argues that individual systems should not be treated in isolation; instead, they should be made aware of the opportunities naturally inherent in the fact that end-users are affected by multiple systems.
 Besides web backend, this research also bears implications for CDNs, cloud providers, ISPs, cellular carriers, etc.
 
 \mypara{Broader impacts}
-This project has the potential to improve user-perceived quality of web-based applications and increase resource efficiency and energy consumption of large-scale web services.
+This project has the potential to improve user-perceived quality of web-based applications and save resources of large-scale web services.
 It could change the way the federated Internet systems work, from optimizing performance in isolation towards having an end-to-end perspective.
 % By using user-perceived QoE as a driving signal of resource management and scheduling of the web backend, we observe untapped opportunities to achieve better balances between QoE and resource efficiency.
 % In addition, the proposed project will require significant experimental and measurement study which will lead to many opportunities for course enrichment and undergraduate research, including measuring and understanding web delay and user satisfaction as well as implementation over cloud platforms.

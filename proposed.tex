@@ -1,7 +1,7 @@
 %!TEX root = main.tex
 
 \section{Motivation}
-In this section, we set up the context by introducing how web backends optimize QoE today, and introduces the key insight and motivating examples to show why a QoE-driven approach could improve QoE over today's web backend systems.
+In this section, we set up the context by introducing how web backends optimize QoE today, and presents the key insight and motivating examples of why leveraging user heterogeneity could further improve QoE.
 
 \subsection{Web backend systems}
 %\begin{wrapfigure}{r}{0.35\linewidth}
@@ -12,21 +12,21 @@ In this section, we set up the context by introducing how web backends optimize 
 %	\label{fig:background}
 %\end{wrapfigure}
 %Figure~\ref{fig:background} depicts the high-level architecture of large-scale web services. %In  typical workflow of a web request.
-The end-to-end delay of a web request (\ie the web page loading time) typically consists of three components---client software, wide-area networks (WANs), and the backend system.
+The end-to-end delay of a web request (\ie page loading time) typically consists of three parts---client-side rendering, wide-area networks (WANs), and the backend system.
 %The delay of each component contributes to the end-to-end delay. 
 Thus the user-perceived QoE can be affected by the delay of any of these components.
-(assuming the requested data is not cached locally by the client/ISP, etc). 
+(if the requested data is not cached locally by the client/ISP, etc). 
 %In today's federated Internet architecture, the web service provider typically only has the control over the backend-induced delay. 
 %Note that although client-side browsers/apps are developed by web service providers, the client-side delay is largely decided by how OS share resources among applications. 
-A web backend system can be viewed as solving a resource sharing problem: to share limited resources among web requests in order to optimize their QoE.
 
+A web backend system can be viewed as solving a resource sharing problem: to share limited resources among web requests in order to optimize their QoE.
 In practice, however, the web service providers only control the backend delay\footnote{Although client-side browsers/apps are developed by web service providers, the client-side processing delay is largely decided by how OS share resources among applications.} and have no direct visibility to the non-backend delay of other systems. 
-Thus, the conventional wisdom has been that the backend system should ensure all requests be processed within a deadline (\eg as described in the service-level agreement), under the assumption that other non-backend systems would add some roughly the same amount of non-backend delay.
+Consequently, the conventional wisdom has been that the backend system should ensure all requests be processed within a deadline (\eg as described in the service-level agreement~\cite{jang2015silo,serrano2013towards}), under the assumption that other non-backend systems (WANs, browser, etc) would add a random amount of non-backend delay.
 %With the web service providers only controlling the backend and the backend-induced delay\footnote{Although client-side browsers/apps are developed by web service providers, the client-side delay is largely decided by how OS share resources among applications.}, they seek to minimize the backend delay. 
 
 \subsection{Our approach: Minimizing the impact of backend delay}
 
-The traditional approach is sensible only if the backend delay has the same effect on any request.
+This traditional approach is sensible only if the backend delay has the same effect on any request.
 However, {\em the sensitivity of QoE to the backend delay does vary across requests}. %\eg the same 30ms backend delay can affect the QoE of two requests very differently, depending on their non-backend delay.
 
 \begin{wrapfigure}{r}{0.4\linewidth}
@@ -52,7 +52,7 @@ In Figure~\ref{fig:qoe-curve}, QoE is much more sensitive to the backend delay w
 
 \begin{wrapfigure}{r}{0.4\linewidth}
 	\centering
-	\vspace{-0.5cm}
+	\vspace{-0.3cm}
 	\includegraphics[width=1.0\textwidth]{figs/objective-contrast.pdf}
 	\caption{\em Contrasting the traditional control objective with QoE-driven control objective.}
 	\label{fig:objective-contrast}
