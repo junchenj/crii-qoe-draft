@@ -39,7 +39,7 @@ However, {\em the sensitivity of QoE to the backend delay does vary across reque
 \mypara{Key insight: Heterogeneous sensitivity of QoE to backend delay}
 To illustrate this observation, Figure~\ref{fig:qoe-curve} shows the {\em QoE curve} (\ie the relationship between QoE and the end-to-end delay of a request) using  a real-world dataset.
 %Figure~\ref{fig:qoe-curve} illustrates this using a dataset of \fillme web requests. 
-The dataset includes requests to the same page (one of Alexa's top-50 pages) over a span of 24 hours from 12 countries, which represent a decent spatio-temporal coverage of users while avoiding the impact of content-specific factors on QoE. 
+The dataset includes requests to the same page (one of Alexa's top-50 pages) over a span of 24 hours from 12 countries, which represent a decent spatio-temporal coverage of users while avoiding the impact of content-specific factors on QoE.\footnote{The QoE curve may vary with the type of web page (\eg QoE in general is less sensitive to end-to-end delay when the user really needs to see the content of the page), yet the sigmoid-like shape remains~\cite{akamai-report}.} 
 %The figure shows the relationship between QoE and the end-to-end delay of a request, which we refer to as the {\em QoE curve}.
 %It is based on \fillme requests to a particular page (\fillme), thus avoiding the impact of content on QoE. 
 We define QoE of a request by user engagement\footnote{User engagement is one of the standard ways of measuring user experience~\cite{balachandran2014modeling,shafiq2014understanding,dobrian2011understanding}, in part because it is used directly in the click-/conversion-driven revenue models. Similar QoE curve has been observed against other QoE measures (\eg mean opinion score) in the literature too.}---the duration of the user staying on the web page and all subsequent pages linked from the page. 
@@ -47,10 +47,10 @@ The end-to-end delay is defined by the page load time~\cite{wang2013demystify}, 
 The key feature of the QoE curve is its non-linear (sigmoid-like) shape---\ie the impact of the backend delay (\ie small increase of end-to-end delay) on a request's QoE depends on its position on the curve.
 It can be explained as following.
 Users are not sensitive to a small backend delay when the overall delay is so short that it is imperceptible or when it is too long that the user has mostly tired of waiting. But when the backend delay is in between these two cases, it can make significant difference. 
-In Figure~\ref{fig:qoe-curve}, QoE is much more sensitive to the backend delay when the total delay is between roughly 1200ms and 2200ms than it is below or above that range.\footnote{This curve may vary with the nature of the web sites and the requests (\eg QoE in general is less sensitive to delay when the user really needs to see the content of the page than when the website tries to entice users to do something), yet the sigmoid-like shape remains.}
+In Figure~\ref{fig:qoe-curve}, QoE is much more sensitive to the backend delay when the total delay is between roughly 1200ms and 2200ms than it is below or above that range.
 
 
-\begin{wrapfigure}{r}{0.45\linewidth}
+\begin{wrapfigure}{r}{0.4\linewidth}
 	\centering
 	\vspace{-0.5cm}
 	\includegraphics[width=1.0\textwidth]{figs/objective-contrast.pdf}
@@ -121,7 +121,7 @@ Uses of replica selections include selections of web servers, nodes of a distrib
 
 \end{packeditemize}
 One should note that these benefits can be realized without adding new hardware resources or changing software stack.
-These optimizations might appear unfair at first glance, but fairness can be restored since each request gets an equal treatment, \ie QoE degradation (more on this in \S\ref{sec:fairness}).
+% These optimizations might appear unfair at first glance, but fairness can be restored since each request gets an equal treatment, \ie QoE degradation (more on this in \S\ref{sec:fairness}).
 
 
 
@@ -191,7 +191,7 @@ Fortunately, the backend delays typically constitute is a non-trivial yet not do
 We propose to run measurement studies and trace-driven analysis to characterize the QoE-driven opportunities along three aspects.
 First, we will perform a mix of user studies and trace-driven analysis to create QoE curve for various web sites (\eg Alexa top sites) and different users (\eg various devices, demographic areas) to confirm that the impact of backend delay on QoE does varies.
 %- Quantifying the heterogeneity of QoE sensitivity
-Second, we will work with large content providers to gain insights as to whether real-world workload is a mix of sensitive and insensitive requests and the backend delay is variable. 
+Second, we will work with Microsoft, a large web service provider to gain insights on the fraction of backend delay-sensitive web requests in real-world traffic and how dynamic the backend delay of a large-scale web service can be.
 Based on our discussion with Microsoft, it is expected that this task can use real-world data.
 %- Impact of QoE-aware logic on QoE (maybe delay is too small to be noticed anyway)
 Finally, to efficiently explore the whole space of advantages (performance metrics and use cases presented in \S\ref{subsec:benefits}), we plan to scale the evaluation by developing a trace-driven simulator (similar to Figure~\ref{fig:simulation}) that uses real trace to estimate the potential improvement without actually deploying QoE-driven web backend.
@@ -224,7 +224,7 @@ This information can be inferred by estimating its non-backend and finding its p
 %We envision different ways in which this information would be provided; \eg through a service that predicts the non-backend delay of a new request by profiling the non-backend delay of similar history requests, or adding a field in the request for any subsystem to tag the time it leaves each subsystem. (More discussion in \S\ref{sec:arch}.)
 
 
-\mypara{Estimating non-backend delay}
+\mypara{Potential approaches to estimating non-backend delay}
 Making web backend aware of a request's QoE sensitivity is difficult in today's federated Internet architecture with the web backend system only having the visibility of the delay within its own system, while QoE, defined by either subjective user satisfaction or end-to-end response time, is only observable by the clients themselves. 
 We envision that the QoE-delay curve, \ie relationship between end-to-end delay and QoE, should be profiled offline (for each content/application), because it is not expected to change frequently.
 If the backend knows the non-backend delay of any incoming request, it would then be able to derive the QoE sensitivity of the request from the QoE-delay curve. 
@@ -238,12 +238,16 @@ Another approach is directly estimate the non-backend delay of a request using t
 \end{packeditemize}
 Note that the two approaches represent a tradeoff---the history-based approach requires no additional real-time tracing of a new request and thus less intrusive to the existing system, whereas the tracing-based approach is more intrusive but might be more accurate as it directly measures the request under consideration.
 
-\mypara{What pieces in today's systems can be used}
-In fact, the tracing infrastructure, similar to what is needed for the tracing-based approach, is already available in several large-scale web service infrastructures. Facebook has introduced such a tracing system~\cite{mystery}. Microsoft has a similar internal tracing system that keeps track of several key timestamps of a request (\eg when is issued by client, received by the edge web server, received and processed by a backend database)~\cite{lecuyer2017harvesting,odin}.
+% \mypara{What pieces in today's systems can be used}
+% In fact, the tracing infrastructure, similar to what is needed for the tracing-based approach, is already available in several large-scale web service infrastructures. Facebook has introduced such a tracing system~\cite{mystery}. Microsoft has a similar internal tracing system that keeps track of several key timestamps of a request (\eg when is issued by client, received by the edge web server, received and processed by a backend database)~\cite{lecuyer2017harvesting,odin}.
 
 \mypara{Proposed research}
 %- Cross-subsystem tracing and predicting non-backend delay
-While both history-based and tracking-based approaches sound promising, they may not meet the goal of estimating QoE sensitivity of requests in real-time. 
+In fact, the tracing infrastructure, similar to what is needed for the tracing-based approach, is already available in several large-scale web service infrastructures. Facebook has introduced such a tracing system~\cite{mystery}. Microsoft has a similar internal tracing system that keeps track of several key timestamps of a request (\eg when is issued by client, received by the edge web server, received and processed by a backend database)~\cite{lecuyer2017harvesting,odin}.
+% While both history-based and tracking-based approaches sound promising, 
+
+While building the system on existing tracing infrastructure sounds promising,
+they may not meet the goal of estimating QoE sensitivity of requests in real-time. 
 These tracing systems and QoE recording systems are mainly built for {\em offline} diagnosis, rather than online inference. As a result, the tracing events are often recorded by individual subsystems in a distributed fashion, but only collected to a central place that can be queried every several minutes or even hours. 
 To address this problem requires a better solution. 
 One promising approach is to make these tracing information (\eg timestamps of the past events of a request) ``in-band'' as part of the request itself. This may require changes in the message format or client-facing interfaces, but will make these tracing information instantly available when the backend receives the request.
@@ -316,7 +320,7 @@ The optimal solution achieves better tail QoE than both baselines.
 Both load balancing policy and latency-aware put even load to the replicas, which make both equally overloaded, causing long tail delay and bad tail QoE.
 In contrast, the optimal policy diliberately puts more requests on one than another, but does so by letting QoE-sensitive requests use the lighter-loaded replica and letting QoE-insensitive requests use the slightly more loaded replica. 
 
-In short, we see that, in both scheduling and replica selection, traditional QoE-agnostic policies are fundamentally unable to achieve the same performance as optimal QoE-driven policies. However, implementing an optimal  QoE-driven policy in practice is challenging.
+% In short, we see that, in both scheduling and replica selection, traditional QoE-agnostic policies are fundamentally unable to achieve the same performance as optimal QoE-driven policies. However, implementing an optimal  QoE-driven policy in practice is challenging.
 
 
 %\end{comment}
@@ -859,24 +863,27 @@ Finally, we will investigate how fairness should be defined so that we can avoid
 \section{Putting It into Perspective}
 Here we contrast our proposal to three categories of closely related prior work.
 
-\mypara{Improving web service quality-latency tradeoffs}
-We are not the first to observe that the impact of web backend varies across users. 
-Timecard~\cite{timecard} allows requests that have shorter network delay to wait longer for the web server to retrieve better ad content. 
-DQBarge~\cite{dqbarge} similarly trades delay for better response quality by monitoring the progress of parallel subtasks and allowing faster subtasks to process longer to get better results without increasing the total response time.
-Also relevant are works that dynamically predict the response-time service-level agreement of cloud applications~\cite{jayathilaka2015response}, which are driven by the same need to cope with the heterogeneity of non-backend delay across users and over time.
-Closest to the proposal is our previous work EONA~\cite{eona} which pioneers the idea of driving individual systems of the application ecosystem (including web service backend) by user-perceived QoE.
-However, none of these works show the benefits of QoE-awareness through the lens of resource/QoE tradeoffs. 
+\mypara{Improving quality-latency tradeoffs for web services}
+That the impact of web backend varies across users has been observed and used before. 
+Timecard~\cite{timecard} allows requests with lower network delay to wait longer for the web server to retrieve better ad content. 
+DQBarge~\cite{dqbarge} similarly trades delay for better response quality by monitoring the progress of parallel subtasks and allowing non-critical-path subtasks to be process longer to get better results without increasing the total response time.
+Driven by the same need to cope with the spatial/temporal heterogeneity of network conditions across users, some works (\eg~\cite{jayathilaka2015response}) try to predict the response-time service-level agreement of cloud applications.
+% Also relevant are works that dynamically predict the response-time service-level agreement of cloud applications~\cite{jayathilaka2015response}, which are driven by the same need to cope with the heterogeneity of non-backend delay across users and over time.
+Web page prioritization techniques (\eg~\cite{butkiewicz2015klotski,netravali2016polaris}) try to re-schedule the loading of web objects in order to maximize perceived quality.
+Closest to this proposal is our prior work EONA~\cite{eona}, which pioneers the idea of driving individual systems (including web service backend) by user-perceived QoE.
+However, none of these works leverages the heterogeneity of users' tolerance of backend delay through the lens of resource/QoE tradeoffs. 
 
 \mypara{Application-aware cloud scheduling}
-Jointly optimizing application-level objectives with network- or system-level mechanisms is a well-studied topic. 
-For instance, Coflow and its variants~\cite{coflow,chowdhury2015efficient} shows that by grouping network flows that are previously treated independently, application-aware network scheduling can significantly improve the cloud application performance.
-However, these works assume the applications run within the scope of cloud, so they do not take into account the heterogeneous impact non-cloud factors have on application performance.
+Jointly optimizing application-level objectives with network- or system-level mechanisms is a heavily studied topic. 
+Deadline-driven scheduling and congestion control~\cite{vamanan2012deadline,wilson2011better} seeks to finish as many flows as possible by dynamically prioritizing flows with closest deadlines.
+Coflow and its variants~\cite{coflow,chowdhury2015efficient} shows that by grouping network flows that are previously treated independently, application-aware network scheduling can significantly improve the cloud application performance.
+However, these works assume the applications run within the scope of cloud, and fail to leverage the heterogeneous impact non-cloud factors have on the application performance.
 
 \mypara{Video QoE-aware network management}
 It is well-known that user-perceived QoE is different from system-level quality of service (QoS) metrics. 
-The most relevant works based on this insight are those that manage network resources to maintain multimedia QoE at desirable level~\cite{barakovic2013survey,hobfeld2012challenges,seufert2015survey}. 
+The most relevant works based on this insight are those that manage network resources to maintain multimedia QoE at desirable level~\cite{barakovic2013survey,hobfeld2012challenges,seufert2015survey,joseph2014nova}. 
 For instance, a QoE-aware network controller uses estimate user-perceived video QoE~\cite{huysegems2012session} to improve the video streaming via traffic shaping~\cite{petrangeli2015network} so that minimal storage and network resources are allocated to maintain a specific level of user satisfaction.
-However, these works do not consider that some users may be bottlenecked by other systems (other ISPs, CDNs, or home network), and thus fail to take into account both users whose QoE might be made desirable by more network resources as well as users whose QoE requirement cannot be met.
+However, these works do not consider that some users may be bottlenecked by other systems (other ISPs, CDNs, or home network), and thus fail to take into account users whose QoE might be made desirable by more network resources as well as users whose QoE requirement cannot be met.
 
 
 
