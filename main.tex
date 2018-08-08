@@ -261,9 +261,9 @@ For instance, a small amount of backend delay can have a far greater impact on t
 We propose {\em QoE-driven web backend}.
 Unlike today's web backend which seeks to equally minimize the backend delay for each web request, a QoE-driven backend embraces the user heterogeneity---web requests previously seen as indistinguishable by the backend system can now be treated in a way that favors the requests whose QoE is more sensitive to backend delay with negligible drop in other requests' QoE and no additional resources.
 We also observe a confluence of favorable recent trends that can lead the proposed research to real-world impact, including the prevalence of QoE-driven revenue models, and the wide use of tracing between clients and the backend.
-We focus on answering two key challenges.
-First, our approach requires real-time information on the sensitivity of a request's QoE with respect to the backend delay, which is not readily available in today's backend systems.
-Second, the backend resource allocation and scheduling mechanisms need to be updated to utilize the user heterogeneous. This resembles deadline-driven scheduling but with the backend deadline set dynamically for each request based on its external delay.
+We focus on addressing two key challenges.
+First, our approach requires real-time information on the sensitivity of any request's QoE with respect to the backend delay, which is not readily available in today's backend systems.
+Second, the backend resource allocation and scheduling mechanisms need to be updated to utilize the user heterogeneity. This resembles deadline-driven scheduling but with the backend deadline set dynamically for each request based on its external non-backend delay.
 % (1) How much potential benefit does a QoE-driven web backend have in the wild?
 % (2) How to obtain the sensitivity of QoE with respect to the backend processing delay in real time?
 % (3) How should web backend resource be allocated to utilize the heterogeneous impact of backend delay on QoE?
